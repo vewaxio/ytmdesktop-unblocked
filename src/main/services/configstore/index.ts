@@ -53,7 +53,8 @@ export default class ConfigStore extends Service {
           companionServerAuthTokens: null,
           companionServerCORSWildcardEnabled: true,
           discordPresenceEnabled: false,
-          lastFMEnabled: false
+          lastFMEnabled: false,
+          enhancedMediaServiceEnabled: true,
         },
         shortcuts: {
           playPause: "",
@@ -122,6 +123,10 @@ export default class ConfigStore extends Service {
 
           if (!store.has("shortcuts.toggleRepeat")) {
             store.set("shortcuts.toggleRepeat", "");
+          }
+
+          if (!store.has("integrations.enhancedMediaServiceEnabled")) {
+            store.set("integrations.enhancedMediaServiceEnabled", true);
           }
         }
       }
