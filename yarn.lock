@@ -2510,6 +2510,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cargo-cp-artifact@npm:^0.1.5":
+  version: 0.1.8
+  resolution: "cargo-cp-artifact@npm:0.1.8"
+  bin:
+    cargo-cp-artifact: bin/cargo-cp-artifact.js
+  checksum: 10c0/f28e0218a11926c0e12c781179a7ff26fd45bd979efad076a7db970e46e5e6e3d5c9ed4ab24f5e6fdfaaf98ac9f05273a8d3050f9194747ed2aab2facb4e22bb
+  languageName: node
+  linkType: hard
+
 "chalk@npm:^4.0.0, chalk@npm:^4.1.0, chalk@npm:^4.1.1":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
@@ -8238,6 +8247,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"xosms@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "xosms@npm:0.3.0"
+  dependencies:
+    cargo-cp-artifact: "npm:^0.1.5"
+  checksum: 10c0/4f93a2bdc927e3c45d579822976c0adbd6cc0863f78dca14be6a6519147f0dab0d03ae0a7a337e9e14dc6ca1fcae67fd407bdacdf48c81b6dd9d3c1230112200
+  languageName: node
+  linkType: hard
+
 "y18n@npm:^5.0.5":
   version: 5.0.8
   resolution: "y18n@npm:5.0.8"
@@ -8373,5 +8391,6 @@ __metadata:
     typescript: "npm:~5.9.2"
     vite: "npm:^5.4.19"
     vue: "npm:^3.5.18"
+    xosms: "npm:^0.3.0"
   languageName: unknown
   linkType: soft
