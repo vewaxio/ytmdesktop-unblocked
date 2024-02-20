@@ -45,6 +45,9 @@ export default class EnhancedMediaService extends Integration {
           case "pause":
             ytmView.webContents.send("remoteControl:execute", "pause");
             break;
+          case "stop":
+            this.ytmView.webContents.send("remoteControl:execute", "pause");
+            break;
           case "next":
             ytmView.webContents.send("remoteControl:execute", "next");
             break;
