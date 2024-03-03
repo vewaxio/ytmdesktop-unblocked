@@ -39,7 +39,7 @@ export default class EnhancedMediaService extends Integration {
   constructor() {
     super();
 
-    this.mediaPlayer.on("buttonpressed", (button: string) => {
+    this.mediaPlayer.on("buttonpressed", (_error: unknown, button: string) => {
       const ytmViewManager = this.getService(YTMViewManager);
       const ytmView = ytmViewManager.getView();
 
@@ -69,7 +69,7 @@ export default class EnhancedMediaService extends Integration {
       }
     });
 
-    this.mediaPlayer.on("positionchanged", (position: number) => {
+    this.mediaPlayer.on("positionchanged", (_error: unknown, position: number) => {
       const ytmViewManager = this.getService(YTMViewManager);
       const ytmView = ytmViewManager.getView();
 
