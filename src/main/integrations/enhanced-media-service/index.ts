@@ -1,7 +1,7 @@
 import { app, BrowserView } from "electron";
 import playerStateStore, { PlayerState, Thumbnail, VideoState } from "../../player-state-store";
 import IIntegration from "../integration";
-import { MediaServiceProvider, MediaType, PlaybackStatus, ThumbnailType } from "xosms/dist/binding";
+import { MediaPlayer, MediaPlayerMediaType, MediaPlayerPlaybackStatus, MediaPlayerThumbnail, MediaPlayerThumbnailType } from "xosms";
 import Integration from "../integration";
 import YTMViewManager from "../../services/ytmviewmanager";
 
@@ -25,17 +25,21 @@ export default class EnhancedMediaService extends Integration {
   
   private enabled = false;
   private stateCallback: (event: PlayerState) => void = null;
-  private mediaServiceProvider: MediaServiceProvider = new MediaServiceProvider("ytmd", "YouTube Music Desktop App");
+  private mediaPlayer: MediaPlayer = new MediaPlayer("ytmdesktop", "YouTube Music Desktop App");
 
   private lastVideoDetailsTitle: string | null = null;
+  private lastVideoDetailsAlbum: string | null = null;
   private lastVideoDetailsAuthor: string | null = null;
   private lastVideoDetailsId: string | null = null;
   private lastTrackState: VideoState | null = null;
+  private lastThumbnail: string | null = null;
+  private lastDurationSeconds: number | null = null;
+  private lastVideoProgress: number | null = null;
 
   constructor() {
     super();
 
-    this.mediaServiceProvider.buttonPressed = (button: unknown) => {
+    this.mediaPlayer.on("buttonpressed", (button: string) => {
       const ytmViewManager = this.getService(YTMViewManager);
       const ytmView = ytmViewManager.getView();
 
@@ -51,7 +55,7 @@ export default class EnhancedMediaService extends Integration {
             ytmView.webContents.send("remoteControl:execute", "pause");
             break;
           case "stop":
-            this.ytmView.webContents.send("remoteControl:execute", "pause");
+            ytmView.webContents.send("remoteControl:execute", "pause");
             break;
           case "next":
             ytmView.webContents.send("remoteControl:execute", "next");
@@ -63,13 +67,22 @@ export default class EnhancedMediaService extends Integration {
             break;
         }
       }
-    };
-    this.mediaServiceProvider.isEnabled = true;
-    this.mediaServiceProvider.nextButtonEnabled = true;
-    this.mediaServiceProvider.pauseButtonEnabled = true;
-    this.mediaServiceProvider.playButtonEnabled = true;
-    this.mediaServiceProvider.previousButtonEnabled = true;
-    this.mediaServiceProvider.trackId = "'/org/mpris/MediaPlayer2/ytmdesktop'";
+    });
+
+    this.mediaPlayer.on("positionchanged", (position: number) => {
+      const ytmViewManager = this.getService(YTMViewManager);
+      const ytmView = ytmViewManager.getView();
+
+      if (ytmView) {
+        if (position >= 0 && position <= playerStateStore.getState().videoDetails.durationSeconds)
+          ytmView.webContents.send("remoteControl:execute", "seekTo", position);
+      }
+    });
+
+    this.mediaPlayer.nextButtonEnabled = true;
+    this.mediaPlayer.pauseButtonEnabled = true;
+    this.mediaPlayer.playButtonEnabled = true;
+    this.mediaPlayer.previousButtonEnabled = true;
   }
   
   public override onSetup(): void {
@@ -77,7 +90,8 @@ export default class EnhancedMediaService extends Integration {
   }
 
   public override onEnabled(): void {
-    this.mediaServiceProvider.isEnabled = true;
+    this.mediaPlayer.activate();
+    this.mediaPlayer.mediaType = MediaPlayerMediaType.Music;
     this.enabled = true;
     this.stateCallback = event => {
       this.playerStateChanged(event);
@@ -86,7 +100,7 @@ export default class EnhancedMediaService extends Integration {
   }
   
   public override onDisabled(): void {
-    this.mediaServiceProvider.isEnabled = false;
+    this.mediaPlayer.deactivate();
     this.enabled = false;
     if (this.stateCallback) {
       playerStateStore.removeEventListener(this.stateCallback);
@@ -95,31 +109,63 @@ export default class EnhancedMediaService extends Integration {
 
   private playerStateChanged(state: PlayerState) {
     if (this.enabled && state.videoDetails) {
-      if (
-        state.videoDetails.title !== this.lastVideoDetailsTitle ||
-        state.videoDetails.author !== this.lastVideoDetailsAuthor ||
-        state.videoDetails.id !== this.lastVideoDetailsId ||
-        state.trackState !== this.lastTrackState
-      ) {
+      let needUpdate = false;
+      if (state.videoDetails.title !== this.lastVideoDetailsTitle) {
         this.lastVideoDetailsTitle = state.videoDetails.title;
+        this.mediaPlayer.title = state.videoDetails.title;
+
+        needUpdate = true;
+      }
+
+      if (state.videoDetails.author !== this.lastVideoDetailsAuthor) {
         this.lastVideoDetailsAuthor = state.videoDetails.author;
+        this.mediaPlayer.artist = state.videoDetails.author;
+
+        needUpdate = true;
+      }
+
+      /*if (state.videoDetails.id !== this.lastVideoDetailsId) {
         this.lastVideoDetailsId = state.videoDetails.id;
+        this.mediaPlayer.trackId = state.videoDetails.id;
+      }*/
+
+      if (state.trackState !== this.lastTrackState) {
         this.lastTrackState = state.trackState;
 
-        this.mediaServiceProvider.mediaType = MediaType.Music;
-        if (state.videoDetails.album !== null && state.videoDetails.album !== undefined) this.mediaServiceProvider.albumTitle = state.videoDetails.album;
-        this.mediaServiceProvider.artist = state.videoDetails.author;
-        this.mediaServiceProvider.title = state.videoDetails.title;
-        this.mediaServiceProvider.trackId = state.videoDetails.id;
-        this.mediaServiceProvider.setThumbnail(ThumbnailType.Uri, getHighestResThumbnail(state.videoDetails.thumbnails));
+        if (state.trackState === VideoState.Playing) this.mediaPlayer.playbackStatus = MediaPlayerPlaybackStatus.Playing;
+        if (state.trackState === VideoState.Paused) this.mediaPlayer.playbackStatus = MediaPlayerPlaybackStatus.Paused;
+        if (state.trackState === VideoState.Buffering) this.mediaPlayer.playbackStatus = MediaPlayerPlaybackStatus.Stopped;
+        if (state.trackState === VideoState.Unknown) this.mediaPlayer.playbackStatus = MediaPlayerPlaybackStatus.Stopped;
 
-        if (state.trackState === VideoState.Playing) this.mediaServiceProvider.playbackStatus = PlaybackStatus.Playing;
-        if (state.trackState === VideoState.Paused) this.mediaServiceProvider.playbackStatus = PlaybackStatus.Paused;
-        if (state.trackState === VideoState.Buffering) this.mediaServiceProvider.playbackStatus = PlaybackStatus.Changing;
-        if (state.trackState === VideoState.Unknown) this.mediaServiceProvider.playbackStatus = PlaybackStatus.Closed;
+        needUpdate = true;
+      }
+
+      const thumbnail = getHighestResThumbnail(state.videoDetails.thumbnails);
+      if (thumbnail !== this.lastThumbnail) {
+        this.lastThumbnail = thumbnail;
+        this.mediaPlayer.setThumbnail(await MediaPlayerThumbnail.create(MediaPlayerThumbnailType.Uri, thumbnail));
+
+        needUpdate = true;
+      }
+
+      if (state.videoDetails.album !== this.lastVideoDetailsAlbum) {
+        this.lastVideoDetailsAlbum = state.videoDetails.album;
+        if (state.videoDetails.album !== null && state.videoDetails.album !== undefined) {
+          this.mediaPlayer.albumTitle = state.videoDetails.album;
+
+          needUpdate = true;
+        }
+      }
+
+      if (state.videoDetails.durationSeconds !== this.lastDurationSeconds || state.videoProgress !== this.lastVideoProgress) {
+        this.mediaPlayer.setTimeline(state.videoDetails.durationSeconds, Math.max(0, Math.min(state.videoProgress, state.videoDetails.durationSeconds)));
+      }
+
+      if (needUpdate) {
+        this.mediaPlayer.update();
       }
     } else if (this.enabled && !state.videoDetails) {
-      this.mediaServiceProvider.playbackStatus = PlaybackStatus.Closed;
+      this.mediaPlayer.playbackStatus = MediaPlayerPlaybackStatus.Stopped;
     }
   }
 }
