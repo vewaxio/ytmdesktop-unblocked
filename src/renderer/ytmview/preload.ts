@@ -37,6 +37,46 @@ contextBridge.exposeInMainWorld("ytmd", {
 // YTM internalizes itself so we can't call into it. This runs before YTM does and allows us to hook into it.
 EarlySetup.hookYTMObjects();
 
+// Intercept all XMLHttpRequests so we can apply overrides when needed
+(async function () {
+  (
+    await webFrame.executeJavaScript(`
+      (function() {
+        function deepMerge(target, source) {
+          for (const key in source) {
+            if (source[key] instanceof Object) {
+              target[key] = deepMerge(target[key] || {}, source[key]);
+            } else {
+              target[key] = source[key];
+            }
+          }
+          return target;
+        }
+
+        const originalSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function (body) {
+          let modifiedBody = body;
+
+          if (body) {
+            try {
+              const json = JSON.parse(body);
+              if (json.context && json.context.ytmdOverrides) {
+                const overrides = json.context.ytmdOverrides;
+                delete json.context.ytmdOverrides;
+                modifiedBody = JSON.stringify(deepMerge(json, overrides));
+              }
+            } catch (err) {
+              /* empty */
+            }
+          }
+
+          return originalSend.call(this, modifiedBody);
+        };
+      })
+    `)
+  )();
+})();
+
 window.addEventListener("load", async () => {
   let setupCompletions = 0;
   try {

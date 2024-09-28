@@ -11,21 +11,21 @@
   timedLyricsSource.classList.add("ytmd-lyrics-source");
 
   async function getTimedLyrics() {
-    const response = await fetch("/youtubei/v1/browse?prettyPrint=false", {
-      method: "POST",
-      body: JSON.stringify({
+    try {
+      const json = await document.querySelector("ytmusic-app").networkManager.fetch("/browse", {
         browseId: currentLyricBrowseId,
         context: {
-          client: {
-            clientName: "ANDROID_MUSIC",
-            clientVersion: "7.12.5"
+          ytmdOverrides: {
+            context: {
+              client: {
+                clientName: "ANDROID_MUSIC",
+                clientVersion: "7.12.5"
+              }
+            }
           }
         }
-      })
-    });
+      });
 
-    if (response.ok) {
-      const json = await response.json();
       // This is likely a timed lyrics response
       if (json.contents && json.contents.elementRenderer) {
         const timedLyrics = json.contents.elementRenderer.newElement.type.componentType.model.timedLyricsModel.lyricsData.timedLyricsData;
@@ -42,7 +42,7 @@
           lyricElement.setAttribute("data-end-ms", lyric.cueRange.endTimeMilliseconds);
           lyricElement.onclick = () => {
             document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.seekTo(parseInt(lyric.cueRange.startTimeMilliseconds) / 1000);
-          }
+          };
           lyricElements.push(lyricElement);
         }
         timedLyricsContainer.replaceChildren(...lyricElements);
@@ -54,6 +54,8 @@
       } else {
         currentTimedLyrics = null;
       }
+    } catch (err) {
+      /* empty */
     }
   }
 
