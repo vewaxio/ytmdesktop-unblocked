@@ -11,7 +11,7 @@
   timedLyricsSource.classList.add("ytmd-lyrics-source");
 
   async function getTimedLyrics() {
-    const response = await fetch("/youtubei/v1/browse", {
+    const response = await fetch("/youtubei/v1/browse?prettyPrint=false", {
       method: "POST",
       body: JSON.stringify({
         browseId: currentLyricBrowseId,
