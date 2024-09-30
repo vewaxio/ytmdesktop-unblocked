@@ -49,6 +49,47 @@ export function createStyleSheet() {
       .ytmd-player-bar-control.sleep-timer-button.active {
         color: #FFFFFF;
       }
+
+      .ytmd-lyrics {
+        margin-top: 16px;
+      }
+
+      .ytmd-lyrics .ytmd-lyric-line {
+        font-size: 24px;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+      }
+        
+      .ytmd-lyrics .ytmd-lyric-line.active {
+        color: rgba(255, 255, 255, 1);
+      }
+
+      .ytmd-lyrics .ytmd-lyric-line {
+        margin-bottom: 16px;
+      }
+
+      .ytmd-lyrics .ytmd-lyric-line:last-child {
+        margin-bottom: 24px;
+      }
+
+      .ytmd-lyrics-source {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 128px;
+      }
+
+      /* This makes sure the return live button is positioned properly */
+      .ytmusic-tab-renderer[page-type='MUSIC_PAGE_TYPE_TRACK_LYRICS'] > #contents {
+        position: relative;
+      }
+
+      .ytmd-lyrics-return-live-container {
+        position: sticky;
+        bottom: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     `)
   );
   document.head.appendChild(css);
