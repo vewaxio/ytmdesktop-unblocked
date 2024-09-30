@@ -7,6 +7,7 @@
   let autoScrolling = false;
   let autoScrollPaused = false;
   let viewingLyricsTab = false;
+  let ytmLyricTabContents = null;
 
   let timedLyricsContainer = document.createElement("div");
   timedLyricsContainer.classList.add("ytmd-lyrics");
@@ -31,7 +32,6 @@
   function enableAutoScroll() {
     autoScrollPaused = false;
     returnToLive.hidden = true;
-    
   }
 
   function disableAutoScroll() {
@@ -47,7 +47,7 @@
       block: "center",
       inline: "center"
     });
-  }
+  };
   returnToLiveContainer.appendChild(returnToLive);
 
   let tabRenderer = document.querySelector("#player-page #tab-renderer");
@@ -140,6 +140,8 @@
       let tabRenderer = document.querySelector("#player-page #tab-renderer");
 
       const contents = await waitForElement(tabRenderer, ".ytmusic-tab-renderer[page-type='MUSIC_PAGE_TYPE_TRACK_LYRICS'] > #contents");
+      if (!ytmLyricTabContents)
+        ytmLyricTabContents = Array.from(contents.children);
       contents.replaceChildren(timedLyricsContainer, timedLyricsSource, returnToLiveContainer);
     }
   }
@@ -189,18 +191,26 @@
         await getTimedLyrics();
       }
 
-      if (state.playerPage.playerPageTabSelectedIndex && state.playerPage.playerPageTabSelectedIndex === lyricsTab) {
+      if (state.playerPage.playerPageTabSelectedIndex === lyricsTab) {
         viewingLyricsTab = true;
-        await updateLyricsTab();
-        enableAutoScroll();
-        autoScrolling = true;
-        timedLyricsContainer.querySelector(".active").scrollIntoView({
-          behavior: "instant",
-          block: "center",
-          inline: "center"
-        });
-      } else {
+        if (state.player.playerResponse.videoDetails.musicVideoType !== "MUSIC_VIDEO_TYPE_OMV") {
+          await updateLyricsTab();
+          enableAutoScroll();
+          autoScrolling = true;
+          timedLyricsContainer.querySelector(".active").scrollIntoView({
+            behavior: "instant",
+            block: "center",
+            inline: "center"
+          });
+        } else {
+          if (currentTimedLyrics) {
+            const contents = await waitForElement(tabRenderer, ".ytmusic-tab-renderer[page-type='MUSIC_PAGE_TYPE_TRACK_LYRICS'] > #contents");
+            contents.replaceChildren(...ytmLyricTabContents);
+          }
+        }
+      } else if (state.playerPage.playerPageTabSelectedIndex !== lyricsTab) {
         viewingLyricsTab = false;
+        ytmLyricTabContents = null;
       }
     }
   });
