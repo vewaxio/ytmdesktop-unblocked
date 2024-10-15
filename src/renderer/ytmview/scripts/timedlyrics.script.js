@@ -22,7 +22,7 @@
     text: {
       runs: [
         {
-          text: "Scroll to Current"
+          text: "Sync to video time"
         }
       ]
     },
