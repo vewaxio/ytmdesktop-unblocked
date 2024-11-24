@@ -123,7 +123,7 @@ app.on("ready", async () => {
   //#region Updater Check
   const updaterWindow = windowmanager.createWindow("Browser", {
     name: "Updater",
-    autoRecreate: true,
+    autoRecreate: false,
     waitForViews: true,
     url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/updater/index.html" : undefined,
     file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/updater/index.html`),
@@ -247,7 +247,7 @@ app.on("ready", async () => {
 
   const mainWindow = windowmanager.createWindow("Browser", {
     name: "Main",
-    autoRecreate: true,
+    autoRecreate: false,
     waitForViews: true,
     windowState: {
       maximized: configStore.get("state.windowMaximized")
@@ -319,7 +319,7 @@ app.on("ready", async () => {
     const mainWindowBounds = mainWindow._getElectronWindow().getBounds();
     windowmanager.createWindow("Browser", {
       name: "Settings",
-      autoRecreate: true,
+      autoRecreate: false,
       waitForViews: true,
       url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/settings/index.html" : undefined,
       file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/settings/index.html`),
