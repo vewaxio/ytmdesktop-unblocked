@@ -13,6 +13,9 @@
   timedLyricsContainer.classList.add("ytmd-lyrics");
   let timedLyricsSource = document.createElement("p");
   timedLyricsSource.classList.add("ytmd-lyrics-source");
+  let timedLyricsYTMDNote = document.createElement("p");
+  timedLyricsYTMDNote.classList.add("ytmd-lyrics-ytmdnote");
+  timedLyricsYTMDNote.innerText = "Timed lyrics system provided by YTMDesktop. This is not an official feature of YouTube Music."
 
   let returnToLiveContainer = document.createElement("div");
   returnToLiveContainer.classList.add("ytmd-lyrics-return-live-container");
@@ -143,7 +146,7 @@
       const contents = await waitForElement(tabRenderer, ".ytmusic-tab-renderer[page-type='MUSIC_PAGE_TYPE_TRACK_LYRICS'] > #contents");
       if (!ytmLyricTabContents)
         ytmLyricTabContents = Array.from(contents.children);
-      contents.replaceChildren(timedLyricsContainer, timedLyricsSource, returnToLiveContainer);
+      contents.replaceChildren(timedLyricsContainer, timedLyricsSource, timedLyricsYTMDNote, returnToLiveContainer);
     }
   }
 

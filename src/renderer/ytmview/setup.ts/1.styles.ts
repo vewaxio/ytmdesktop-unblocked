@@ -75,6 +75,12 @@ export function createStyleSheet() {
       .ytmd-lyrics-source {
         font-size: 14px;
         color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 16px;
+      }
+
+      .ytmd-lyrics-ytmdnote {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
         margin-bottom: 128px;
       }
 
