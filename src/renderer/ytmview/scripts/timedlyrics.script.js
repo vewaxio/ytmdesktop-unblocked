@@ -67,19 +67,20 @@
 
   async function getTimedLyrics() {
     try {
-      const json = await document.querySelector("ytmusic-app").networkManager.fetch("/browse", {
-        browseId: currentLyricBrowseId,
-        context: {
-          ytmdOverrides: {
-            context: {
-              client: {
-                clientName: "ANDROID_MUSIC",
-                clientVersion: "7.12.5"
-              }
+      // This is an anonymous request and could be broken by Google at any time
+      const browseRes = await fetch("/youtubei/v1/browse", {
+        method: "POST",
+        body: JSON.stringify({
+          browseId: currentLyricBrowseId,
+          context: {
+            client: {
+              clientName: "ANDROID_MUSIC",
+              clientVersion: "7.12.5"
             }
           }
-        }
+        })
       });
+      const json = await browseRes.json();
 
       // This is likely a timed lyrics response
       if (json.contents && json.contents.elementRenderer) {
