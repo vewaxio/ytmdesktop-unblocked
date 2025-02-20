@@ -40,7 +40,6 @@ window.addEventListener("load", async () => {
     return;
   }
 
-  // TODO: This is not currently fully utilized yet
   let setupCompletions = 0;
   try {
     {
