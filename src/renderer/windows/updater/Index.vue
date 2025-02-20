@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import logo from "~assets/icons/ytmd.png";
 
 const appLoadingStatus = ref<string>("Checking for updates...");
 
@@ -22,7 +23,7 @@ window.ytmd.autoUpdater.onError(() => {
 
 <template>
   <div class="app-updater-container">
-    <img class="logo" draggable="false" :src="require('~assets/icons/ytmd.png')" />
+    <img class="logo" draggable="false" :src="logo" />
     <div class="music-loader">
       <div class="loader-line"></div>
       <div class="loader-line"></div>
