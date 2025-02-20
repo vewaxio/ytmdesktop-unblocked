@@ -24,6 +24,7 @@ import { ServiceCollection } from "./services/servicecollection";
 import StateManager from "./services/statemanager";
 import MemoryStore from "./services/memorystore";
 import { MemoryStoreSchema, TrayIconStyle } from "~shared/store/schema";
+import ProtocolManager from "./services/protocolmanager";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -44,6 +45,7 @@ serviceCollection.addServices([
   YTMViewManager,
   ShortcutManager,
   TaskbarManager,
+  ProtocolManager,
   // This will always go last as it depends on every service since it's an optional system and integrations can perform work with any service
   IntegrationManager
 ]);
@@ -64,60 +66,11 @@ if (!gotTheLock) {
       mainWindow.showAndFocus();
     }
 
-    handleProtocol(commandLine[commandLine.length - 1]);
+    if (serviceHost.initialized) serviceHost.getService(ProtocolManager).handleYTMDProtocol(commandLine[commandLine.length - 1]);
   });
 }
 
 log.info("Application launched");
-
-//#region Protocol Handler
-async function handleProtocol(url: string) {
-  // If the service host isn't initialized the app is still starting up
-  if (!serviceHost.initialized) return;
-
-  const ytmViewManager = serviceHost.getService(YTMViewManager);
-
-  log.info("Handling protocol url", url);
-  const urlPaths = url.split("://")[1];
-  if (urlPaths) {
-    const paths = urlPaths.split("/");
-    if (paths.length > 0) {
-      switch (paths[0]) {
-        case "play": {
-          if (paths.length >= 2) {
-            const videoId = paths[1];
-            const playlistId = paths[2];
-
-            if (ytmViewManager.isInitialized()) {
-              log.debug(`Navigating to videoId: ${videoId}, playlistId: ${playlistId}`);
-              await ytmViewManager.ready();
-              ytmViewManager.getView().webContents.send("remoteControl:execute", "navigate", {
-                watchEndpoint: {
-                  videoId: videoId,
-                  playlistId: playlistId
-                }
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-// This will register the protocol in development, this is intentional and should stay this way for development purposes
-if (!app.isDefaultProtocolClient("ytmd")) {
-  if (process.defaultApp) {
-    if (process.argv.length >= 2) {
-      log.info("Application set as default protcol client for 'ytmd'");
-      app.setAsDefaultProtocolClient("ytmd", process.execPath, [path.resolve(process.argv[1])]);
-    }
-  } else {
-    log.info("Application set as default protcol client for 'ytmd'");
-    app.setAsDefaultProtocolClient("ytmd", process.execPath);
-  }
-}
-//#endregion
 
 // Application prerequisites before fully starting
 app.enableSandbox();
@@ -163,8 +116,9 @@ app.on("ready", async () => {
     name: "Updater",
     autoRecreate: false,
     waitForViews: true,
-    url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/updater/index.html" : undefined,
-    file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/updater/index.html`),
+    url: app.isPackaged ? "ytmd-app://updater" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/updater/index.html",
+    //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/updater/index.html" : undefined,
+    //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/updater/index.html`),
     electronOptions: {
       width: 256,
       height: 320,
@@ -257,8 +211,9 @@ app.on("ready", async () => {
 
   const mainView = new AppView({
     name: "Main",
-    url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/main/index.html" : undefined,
-    file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/main/index.html`),
+    url: app.isPackaged ? "ytmd-app://main" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/main/index.html",
+    //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/main/index.html" : undefined,
+    //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/main/index.html`),
     autoRecreate: true,
     viewState: {
       autoResize: {
@@ -289,8 +244,9 @@ app.on("ready", async () => {
       maximized: configStore.get("state.windowMaximized")
     },
     views: [mainView],
-    url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/titlebar/index.html" : undefined,
-    file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/titlebar/index.html`),
+    url: app.isPackaged ? "ytmd-app://titlebar" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/titlebar/index.html",
+    //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/titlebar/index.html" : undefined,
+    //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/titlebar/index.html`),
     electronOptions: {
       width: windowBounds?.width ?? 1280 / scaleFactor,
       height: windowBounds?.height ?? 720 / scaleFactor,
@@ -357,8 +313,9 @@ app.on("ready", async () => {
       name: "Settings",
       autoRecreate: false,
       waitForViews: true,
-      url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/settings/index.html" : undefined,
-      file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/settings/index.html`),
+      url: app.isPackaged ? "ytmd-app://settings" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/settings/index.html",
+      //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/settings/index.html" : undefined,
+      //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/settings/index.html`),
       electronOptions: {
         width: 800,
         height: 600,
@@ -400,7 +357,7 @@ app.on("ready", async () => {
   function trayIconFileName(style: TrayIconStyle) {
     if (process.platform === "win32") return "tray.ico";
     if (process.platform === "darwin") return "trayTemplate.png";
-  
+
     let color: "white" | "black";
     if (style === TrayIconStyle.White) {
       color = "white";
@@ -411,13 +368,13 @@ app.on("ready", async () => {
     }
     return `ytmd_${color}.png`;
   }
-  
+
   function getTrayIconPath() {
     const style = configStore.get("appearance").trayIconStyle;
     const iconsDir = process.env.NODE_ENV === "development" ? path.join(app.getAppPath(), "src/assets/icons") : process.resourcesPath;
     return path.join(iconsDir, trayIconFileName(style));
   }
-  
+
   function setTrayIcon() {
     tray.setImage(getTrayIconPath());
   }
@@ -542,7 +499,7 @@ app.on("ready", async () => {
 });
 
 app.on("open-url", (_, url) => {
-  handleProtocol(url);
+  if (serviceHost.initialized) serviceHost.getService(ProtocolManager).handleYTMDProtocol(url);
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- powerMonitor doesn't have proper types?
