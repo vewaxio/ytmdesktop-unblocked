@@ -25,7 +25,8 @@ import {
   InvalidVolumeError,
   UnauthenticatedError,
   YouTubeMusicTimeOutError,
-  YouTubeMusicUnavailableError
+  YouTubeMusicUnavailableError,
+  InvalidQueueAddRequestError
 } from "../../api-shared/errors";
 import path from "node:path";
 import Service from "../../../../services/service";
@@ -230,6 +231,61 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
 
         case "toggleDislike": {
           ytmView.webContents.send("remoteControl:execute", "toggleDislike");
+          break;
+        }
+
+        case "queueAdd": {
+          const videoId = commandRequest.data.videoId;
+          const playlistId = commandRequest.data.playlistId;
+          if (videoId == null && playlistId == null) {
+            throw new InvalidQueueAddRequestError();
+          } else if (videoId != null && playlistId != null) {
+            throw new InvalidQueueAddRequestError();
+          }
+
+          const index = commandRequest.data.index;
+          const state = playerStateStore.getState();
+          if (isNaN(index) || index > state.queue.items.length - 1) {
+            throw new InvalidQueueIndexError(index);
+          }
+
+          ytmView.webContents.send("remoteControl:execute", "queueAdd", {
+            videoId: videoId,
+            playlistId: playlistId,
+            index
+          });
+          break;
+        }
+
+        case "queueRemove": {
+          const index = commandRequest.data;
+          const state = playerStateStore.getState();
+
+          if (isNaN(index) || index > state.queue.items.length - 1) {
+            throw new InvalidQueueIndexError(index);
+          }
+
+          ytmView.webContents.send("remoteControl:execute", "queueRemove", index);
+          break;
+        }
+
+        case "queueMove": {
+          const fromIndex = commandRequest.data.fromIndex;
+          const toIndex = commandRequest.data.toIndex;
+          const state = playerStateStore.getState();
+
+          if (isNaN(fromIndex) || fromIndex > state.queue.items.length - 1) {
+            throw new InvalidQueueIndexError(fromIndex);
+          }
+
+          if (isNaN(toIndex) || toIndex > state.queue.items.length - 1) {
+            throw new InvalidQueueIndexError(toIndex);
+          }
+
+          ytmView.webContents.send("remoteControl:execute", "queueMove", {
+            fromIndex,
+            toIndex
+          });
           break;
         }
       }
