@@ -67,6 +67,33 @@ export const APIV1CommandRequestBody = Type.Union([
   }),
   Type.Object({
     command: Type.Literal("toggleDislike")
+  }),
+  Type.Object({
+    command: Type.Literal("queueAdd"),
+    data: Type.Object({
+      videoId: Type.Optional(Type.String()),
+      playlistId: Type.Optional(Type.String()),
+      index: Type.Number({
+        minimum: 0
+      })
+    })
+  }),
+  Type.Object({
+    command: Type.Literal("queueRemove"),
+    data: Type.Number({
+      minimum: 0
+    })
+  }),
+  Type.Object({
+    command: Type.Literal("queueMove"),
+    data: Type.Object({
+      fromIndex: Type.Number({
+        minimum: 0
+      }),
+      toIndex: Type.Number({
+        minimum: 0
+      })
+    })
   })
 ]);
 export type APIV1CommandRequestBodyType = Static<typeof APIV1CommandRequestBody>;
