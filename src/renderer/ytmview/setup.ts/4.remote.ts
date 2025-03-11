@@ -2,6 +2,7 @@ import { ipcRenderer, webFrame } from "electron";
 import toggleLikeScript from "../scripts/togglelike.script?raw";
 import toggleDislikeScript from "../scripts/toggledislike.script?raw";
 import getPlaylistsScript from "../scripts/getplaylists.script?raw";
+import queueAddScript from "../scripts/queueadd.script?raw";
 
 function getYTMTextRun(runs: { text: string }[]) {
   let final = "";
@@ -293,6 +294,50 @@ export function attachIPCListeners() {
             }
           })
         );
+        break;
+      }
+
+      
+      case "queueAdd": {
+        await (
+          await webFrame.executeJavaScript(queueAddScript)
+        )(value.videoId, value.playlistId, value.index);
+        break;
+      }
+
+      case "queueRemove": {
+        const index: number = parseInt(value);
+
+        (
+          await webFrame.executeJavaScript(`
+            (function(index) {
+              window.__YTMD_HOOK__.ytmStore.dispatch({
+                type: "REMOVE_ITEM",
+                payload: index
+              });
+            })
+          `)
+        )(index);
+        break;
+      }
+
+      case "queueMove": {
+        const fromIndex: number = parseInt(value.fromIndex);
+        const toIndex: number = parseInt(value.toIndex);
+
+        (
+          await webFrame.executeJavaScript(`
+            (function(fromIndex, toIndex) {
+              window.__YTMD_HOOK__.ytmStore.dispatch({
+                type: "MOVE_ITEM",
+                payload: {
+                  fromIndex,
+                  toIndex
+                }
+              });
+            })
+          `)
+        )(fromIndex, toIndex);
         break;
       }
     }
