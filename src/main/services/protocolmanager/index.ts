@@ -107,6 +107,11 @@ export default class ProtocolManager extends Service {
         rootPath = path.resolve(process.resourcesPath, `app.asar/.vite/renderer/windows/settings`);
         break;
       }
+
+      case "authorize-companion": {
+        rootPath = path.resolve(process.resourcesPath, `app.asar/.vite/renderer/windows/authorize-companion`);
+        break;
+      }
     }
 
     log.debug(`${req.method} ytmd-app://${host}${pathname}`);
