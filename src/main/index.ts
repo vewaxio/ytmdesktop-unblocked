@@ -117,8 +117,6 @@ app.on("ready", async () => {
     autoRecreate: false,
     waitForViews: true,
     url: app.isPackaged ? "ytmd-app://updater" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/updater/index.html",
-    //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/updater/index.html" : undefined,
-    //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/updater/index.html`),
     electronOptions: {
       width: 256,
       height: 320,
@@ -212,8 +210,6 @@ app.on("ready", async () => {
   const mainView = new AppView({
     name: "Main",
     url: app.isPackaged ? "ytmd-app://main" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/main/index.html",
-    //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/main/index.html" : undefined,
-    //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/main/index.html`),
     autoRecreate: true,
     viewState: {
       autoResize: {
@@ -245,8 +241,6 @@ app.on("ready", async () => {
     },
     views: [mainView],
     url: app.isPackaged ? "ytmd-app://titlebar" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/titlebar/index.html",
-    //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/titlebar/index.html" : undefined,
-    //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/titlebar/index.html`),
     electronOptions: {
       width: windowBounds?.width ?? 1280 / scaleFactor,
       height: windowBounds?.height ?? 720 / scaleFactor,
@@ -314,8 +308,6 @@ app.on("ready", async () => {
       autoRecreate: false,
       waitForViews: true,
       url: app.isPackaged ? "ytmd-app://settings" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/settings/index.html",
-      //url: ALL_WINDOWS_VITE_DEV_SERVER_URL ? ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/settings/index.html" : undefined,
-      //file: ALL_WINDOWS_VITE_DEV_SERVER_URL ? undefined : path.join(__dirname, `../renderer/windows/settings/index.html`),
       electronOptions: {
         width: 800,
         height: 600,
