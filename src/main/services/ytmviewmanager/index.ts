@@ -42,8 +42,10 @@ function openExternalFromYtmView(urlString: string) {
   const domainSplit = url.hostname.split(".");
   domainSplit.reverse();
   const domain = `${domainSplit[1]}.${domainSplit[0]}`;
-  if (domain === "google.com" || domain === "youtube.com") {
+  if (domain === "google.com" || domain === "youtube.com" || domain === "googleusercontent.com" || domain === "ggpht.com") {
     shell.openExternal(urlString);
+  } else {
+    log.warn(`Attempted to open ${urlString} from YTMView but was denied`);
   }
 }
 
@@ -206,31 +208,120 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
       this.sendNavigationHistory();
     });
     this.ytmView.on("webcontents-context-menu", (_event, params) => {
-      if (configStore.get("developer.enableDevTools")) {
-        Menu.buildFromTemplate([
-          {
-            label: "YouTube Music Desktop App",
-            type: "normal",
-            enabled: false
-          },
-          {
+      const menu: (Electron.MenuItemConstructorOptions | Electron.MenuItem)[] = [];
+
+      if (params.spellcheckEnabled) {
+        for (const suggestion of params.dictionarySuggestions) {
+          menu.push({
+            label: suggestion,
+            click: () => this.ytmView.webContents.replaceMisspelling(suggestion)
+          });
+        }
+      }
+
+      if (params.linkURL) {
+        if (menu.length > 0) {
+          menu.push({
             type: "separator"
-          },
-          {
-            label: "Open Developer Tools",
-            type: "normal",
-            click: () => {
-              this.ytmView.webContents.openDevTools({
-                mode: "detach"
-              });
-            }
-          }
-        ]).popup({
-          x: params.x,
-          y: params.y,
-          sourceType: params.menuSourceType
+          });
+        }
+
+        menu.push({
+          label: "Open Link in Browser",
+          type: "normal",
+          click: () => openExternalFromYtmView(params.linkURL)
         });
       }
+
+      if (params.hasImageContents) {
+        if (menu.length > 0) {
+          menu.push({
+            type: "separator"
+          });
+        }
+
+        menu.push({
+          label: "Open Image in Browser",
+          type: "normal",
+          click: () => openExternalFromYtmView(params.srcURL)
+        });
+      }
+
+      if (params.isEditable) {
+        if (menu.length > 0) {
+          menu.push({
+            type: "separator"
+          });
+        }
+
+        menu.push({
+          role: "undo",
+          enabled: params.editFlags.canUndo,
+          accelerator: "CommandOrControl+Z"
+        });
+        menu.push({
+          role: "redo",
+          enabled: params.editFlags.canRedo,
+          accelerator: "CommandOrControl+Shift+Z"
+        });
+        menu.push({
+          type: "separator"
+        });
+        menu.push({
+          role: "cut",
+          enabled: params.editFlags.canCut,
+          accelerator: "CommandOrControl+X"
+        });
+        menu.push({
+          role: "copy",
+          enabled: params.editFlags.canCopy,
+          accelerator: "CommandOrControl+C"
+        });
+        menu.push({
+          role: "paste",
+          enabled: params.editFlags.canPaste,
+          accelerator: "CommandOrControl+V"
+        });
+        menu.push({
+          role: "selectAll",
+          enabled: params.editFlags.canSelectAll,
+          accelerator: "CommandOrControl+A"
+        });
+      } else {
+        if (params.selectionText) {
+          menu.push({
+            role: "copy",
+            enabled: params.editFlags.canCopy,
+            accelerator: "CommandOrControl+C"
+          });
+        }
+        menu.push({
+          role: "selectAll",
+          enabled: params.editFlags.canSelectAll,
+          accelerator: "CommandOrControl+A"
+        });
+      }
+
+      if (configStore.get("developer.enableDevTools")) {
+        if (menu.length > 0) {
+          menu.push({
+            type: "separator"
+          });
+        }
+        menu.push({
+          label: "Inspect",
+          type: "normal",
+          click: () => {
+            this.ytmView.webContents.inspectElement(params.x, params.y);
+          }
+        });
+      }
+
+      Menu.buildFromTemplate(menu).popup({
+        x: params.x,
+        y: params.y,
+        sourceType: params.menuSourceType
+      });
     });
     this.ytmView.on("webcontents-will-navigate", event => {
       const url = new URL(event.url);
