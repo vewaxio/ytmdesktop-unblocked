@@ -62,7 +62,10 @@ export default class ConfigStore extends Service {
           thumbsUp: "",
           thumbsDown: "",
           volumeUp: "",
-          volumeDown: ""
+          volumeDown: "",
+          volumeMute: "",
+          toggleShuffle: "",
+          toggleRepeat: ""
         },
         state: {
           lastUrl: "https://music.youtube.com/",
@@ -106,6 +109,19 @@ export default class ConfigStore extends Service {
         ">=2.0.7": store => {
           if (!store.has("appearance.trayIconStyle")) {
             store.set("appearance.trayIconStyle", 0);
+          }
+        },
+        ">=2.1.0": store => {
+          if (!store.has("shortcuts.volumeMute")) {
+            store.set("shortcuts.volumeMute", "");
+          }
+
+          if (!store.has("shortcuts.toggleShuffle")) {
+            store.set("shortcuts.toggleShuffle", "");
+          }
+
+          if (!store.has("shortcuts.toggleRepeat")) {
+            store.set("shortcuts.toggleRepeat", "");
           }
         }
       }

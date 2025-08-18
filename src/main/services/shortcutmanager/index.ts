@@ -4,7 +4,7 @@ import Service from "../service";
 import ConfigStore from "../configstore";
 import { MemoryStoreSchema, StoreSchema } from "~shared/store/schema";
 import YTMViewManager from "../ytmviewmanager";
-import { DependencyConstructor } from "~shared/types";
+import { DependencyConstructor, Paths } from "~shared/types";
 import MemoryStore from "../memorystore";
 
 export default class ShortcutManager extends Service {
@@ -42,163 +42,91 @@ export default class ShortcutManager extends Service {
     globalShortcut.unregisterAll();
     log.info("Unregistered shortcuts");
 
-    const ytmViewManager = this.getDependency(YTMViewManager);
     const memoryStore = this.getDependency(MemoryStore<MemoryStoreSchema>);
 
     if (shortcuts.playPause) {
-      let registered = false;
-      try {
-        registered = globalShortcut.register(shortcuts.playPause, async () => {
-          await ytmViewManager.ready();
-          ytmViewManager.getView().webContents.send("remoteControl:execute", "playPause");
-        });
-      } catch {
-        /* ignored */
-      }
-
-      if (!registered) {
-        log.info("Failed to register shortcut: playPause");
-        memoryStore.set("shortcutsPlayPauseRegisterFailed", true);
-      } else {
-        log.info("Registered shortcut: playPause");
-        memoryStore.set("shortcutsPlayPauseRegisterFailed", false);
-      }
+      this.tryRegisterShortcut(shortcuts.playPause, "playPause", "shortcutsPlayPauseRegisterFailed");
     } else {
       memoryStore.set("shortcutsPlayPauseRegisterFailed", false);
     }
 
     if (shortcuts.next) {
-      let registered = false;
-      try {
-        registered = globalShortcut.register(shortcuts.next, async () => {
-          await ytmViewManager.ready();
-          ytmViewManager.getView().webContents.send("remoteControl:execute", "next");
-        });
-      } catch {
-        /* empty */
-      }
-
-      if (!registered) {
-        log.info("Failed to register shortcut: next");
-        memoryStore.set("shortcutsNextRegisterFailed", true);
-      } else {
-        log.info("Registered shortcut: next");
-        memoryStore.set("shortcutsNextRegisterFailed", false);
-      }
+      this.tryRegisterShortcut(shortcuts.next, "next", "shortcutsNextRegisterFailed");
     } else {
       memoryStore.set("shortcutsNextRegisterFailed", false);
     }
 
     if (shortcuts.previous) {
-      let registered = false;
-      try {
-        registered = globalShortcut.register(shortcuts.previous, async () => {
-          await ytmViewManager.ready();
-          ytmViewManager.getView().webContents.send("remoteControl:execute", "previous");
-        });
-      } catch {
-        /* empty */
-      }
-
-      if (!registered) {
-        log.info("Failed to register shortcut: previous");
-        memoryStore.set("shortcutsPreviousRegisterFailed", true);
-      } else {
-        log.info("Registered shortcut: previous");
-        memoryStore.set("shortcutsPreviousRegisterFailed", false);
-      }
+      this.tryRegisterShortcut(shortcuts.previous, "previous", "shortcutsPreviousRegisterFailed");
     } else {
       memoryStore.set("shortcutsPreviousRegisterFailed", false);
     }
 
     if (shortcuts.thumbsUp) {
-      let registered = false;
-      try {
-        registered = globalShortcut.register(shortcuts.thumbsUp, async () => {
-          await ytmViewManager.ready();
-          ytmViewManager.getView().webContents.send("remoteControl:execute", "toggleLike");
-        });
-      } catch {
-        /* empty */
-      }
-
-      if (!registered) {
-        log.info("Failed to register shortcut: thumbsUp");
-        memoryStore.set("shortcutsThumbsUpRegisterFailed", true);
-      } else {
-        log.info("Registered shortcut: thumbsUp");
-        memoryStore.set("shortcutsThumbsUpRegisterFailed", false);
-      }
+      this.tryRegisterShortcut(shortcuts.thumbsUp, "toggleLike", "shortcutsThumbsUpRegisterFailed");
     } else {
       memoryStore.set("shortcutsThumbsUpRegisterFailed", false);
     }
 
     if (shortcuts.thumbsDown) {
-      let registered = false;
-      try {
-        registered = globalShortcut.register(shortcuts.thumbsDown, async () => {
-          await ytmViewManager.ready();
-          ytmViewManager.getView().webContents.send("remoteControl:execute", "toggleDislike");
-        });
-      } catch {
-        /* empty */
-      }
-
-      if (!registered) {
-        log.info("Failed to register shortcut: thumbsDown");
-        memoryStore.set("shortcutsThumbsDownRegisterFailed", true);
-      } else {
-        log.info("Registered shortcut: thumbsDown");
-        memoryStore.set("shortcutsThumbsDownRegisterFailed", false);
-      }
+      this.tryRegisterShortcut(shortcuts.thumbsDown, "toggleDislike", "shortcutsThumbsDownRegisterFailed");
     } else {
       memoryStore.set("shortcutsThumbsDownRegisterFailed", false);
     }
 
     if (shortcuts.volumeUp) {
-      let registered = false;
-      try {
-        registered = globalShortcut.register(shortcuts.volumeUp, async () => {
-          await ytmViewManager.ready();
-          ytmViewManager.getView().webContents.send("remoteControl:execute", "volumeUp");
-        });
-      } catch {
-        /* empty */
-      }
-
-      if (!registered) {
-        log.info("Failed to register shortcut: volumeUp");
-        memoryStore.set("shortcutsVolumeUpRegisterFailed", true);
-      } else {
-        log.info("Registered shortcut: volumeUp");
-        memoryStore.set("shortcutsVolumeUpRegisterFailed", false);
-      }
+      this.tryRegisterShortcut(shortcuts.volumeUp, "volumeUp", "shortcutsVolumeUpRegisterFailed");
     } else {
       memoryStore.set("shortcutsVolumeUpRegisterFailed", false);
     }
 
     if (shortcuts.volumeDown) {
-      let registered = false;
-      try {
-        registered = globalShortcut.register(shortcuts.volumeDown, async () => {
-          await ytmViewManager.ready();
-          ytmViewManager.getView().webContents.send("remoteControl:execute", "volumeDown");
-        });
-      } catch {
-        /* empty */
-      }
-
-      if (!registered) {
-        log.info("Failed to register shortcut: volumeDown");
-        memoryStore.set("shortcutsVolumeDownRegisterFailed", true);
-      } else {
-        log.info("Registered shortcut: volumeDown");
-        memoryStore.set("shortcutsVolumeDownRegisterFailed", false);
-      }
+      this.tryRegisterShortcut(shortcuts.volumeDown, "volumeDown", "shortcutsVolumeDownRegisterFailed");
     } else {
       memoryStore.set("shortcutsVolumeDownRegisterFailed", false);
     }
 
+    if (shortcuts.volumeMute) {
+      this.tryRegisterShortcut(shortcuts.volumeMute, "toggleMute", "shortcutsVolumeMuteRegisterFailed");
+    } else {
+      memoryStore.set("shortcutsVolumeMuteRegisterFailed", false);
+    }
+
+    if (shortcuts.toggleShuffle) {
+      this.tryRegisterShortcut(shortcuts.toggleShuffle, "shuffle", "shortcutsToggleShuffleRegisterFailed");
+    } else {
+      memoryStore.set("shortcutsToggleShuffleRegisterFailed", false);
+    }
+
+    if (shortcuts.toggleRepeat) {
+      this.tryRegisterShortcut(shortcuts.toggleRepeat, "cycleRepeatMode", "shortcutsToggleRepeatRegisterFailed");
+    } else {
+      memoryStore.set("shortcutsToggleRepeatRegisterFailed", false);
+    }
+
     log.info("Registered shortcuts");
+  }
+
+  private tryRegisterShortcut(accelerator: string, remoteControl: string, failFlag: Paths<MemoryStoreSchema>) {
+    const ytmViewManager = this.getDependency(YTMViewManager);
+    const memoryStore = this.getDependency(MemoryStore<MemoryStoreSchema>);
+
+    let registered = false;
+    try {
+      registered = globalShortcut.register(accelerator, async () => {
+        await ytmViewManager.ready();
+        ytmViewManager.getView().webContents.send("remoteControl:execute", remoteControl);
+      });
+    } catch {
+      /* empty */
+    }
+
+    if (!registered) {
+      log.info(`Failed to register shortcut: ${remoteControl}`);
+      memoryStore.set(failFlag, true);
+    } else {
+      log.info(`Registered shortcut: ${remoteControl}`);
+      memoryStore.set(failFlag, false);
+    }
   }
 }
