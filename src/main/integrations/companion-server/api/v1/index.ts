@@ -37,7 +37,7 @@ import ConfigStore from "../../../../services/configstore";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
-const transformPlayerState = (state: PlayerState) => {
+export const transformPlayerState = (state: PlayerState) => {
   return {
     player: {
       trackState: state.trackState,
@@ -334,8 +334,6 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
         }
       });
       authorizationWindow.loadURL(app.isPackaged ? "ytmd-app://authorize-companion" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/settings/index.html");
-      //if (ALL_WINDOWS_VITE_DEV_SERVER_URL) authorizationWindow.loadURL(ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/authorize-companion/index.html");
-      //else authorizationWindow.loadFile(path.join(__dirname, `../renderer/windows/authorize-companion/index.html`));
       authorizationWindow.show();
       authorizationWindow.flashFrame(true);
 
