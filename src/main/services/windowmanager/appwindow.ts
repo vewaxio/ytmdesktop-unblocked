@@ -163,7 +163,7 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
   }
 
   /**
-   * This method should not be used as is mostly for internal purposes
+   * This method should not be used as it is mostly for internal purposes
    * @returns The native electron window
    */
   public _getElectronWindow(): MappedElectronWindow[T] {
