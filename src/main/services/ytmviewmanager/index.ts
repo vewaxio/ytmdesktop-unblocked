@@ -15,6 +15,7 @@ export type YTMViewManagerEventMap = {
   "view-recreated": [];
   "unresponsive": [];
   "responsive": [];
+  "title-updated": [string];
 };
 
 function urlIsGoogleAccountsDomain(url: URL): boolean {
@@ -358,6 +359,9 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     this.ytmView.on("webcontents-responsive", () => {
       memoryStore.set("ytmViewUnresponsive", false);
       this.emit("responsive");
+    });
+    this.ytmView.on("webcontents-page-title-updated", (event, title) => {
+      this.emit("title-updated", title);
     });
     this.setWindowOpenHandler();
 

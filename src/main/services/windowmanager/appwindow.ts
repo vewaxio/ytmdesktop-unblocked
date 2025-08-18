@@ -267,6 +267,10 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
     this.electronWindow.setProgressBar(progress, options);
   }
 
+  public setTitle(title: string) {
+    this.electronWindow.setTitle(title);
+  }
+
   public getWindowType() {
     return this.windowType;
   }
