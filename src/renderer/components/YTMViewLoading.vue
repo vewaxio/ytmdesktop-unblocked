@@ -11,15 +11,27 @@ const ytmViewLoadingStatusMessage = computed(() => {
     case YTMViewStatus.Loading:
       return "Loading YouTube Music...";
     case YTMViewStatus.Hooking:
-      return "Waiting for YouTube Music hooks...";
+      return "Waiting for YTMDesktop hooks...";
     case YTMViewStatus.Ready:
       return "Ready";
     default:
       return "";
   }
 });
+const ytmViewLoadTimedOut = ref(false);
+
+let ytmViewTimeout = setTimeout(() => {
+  ytmViewLoadTimedOut.value = true;
+}, 5 * 1000);
 
 window.ytmd.ytmViewStatusChanged((status: YTMViewStatus) => {
+  if (status !== YTMViewStatus.Ready) {
+    clearTimeout(ytmViewTimeout);
+    ytmViewTimeout = setTimeout(() => {
+      ytmViewLoadTimedOut.value = true;
+    }, 5 * 1000);
+  }
+
   ytmViewLoadingStatus.value = status;
 });
 window.ytmd.memoryStore.onStateChanged(newState => {
@@ -41,23 +53,28 @@ function onHide() {
 <template>
   <Transition name="fade" @after-leave="onHide">
     <div v-if="!hide" class="ytmview-loading-container">
-      <div v-if="ytmViewLoadingStatus != YTMViewStatus.Ready" class="ytmview-loading">
-        <img class="logo" :src="logo" />
-        <div class="music-loader">
-          <div class="loader-line"></div>
-          <div class="loader-line"></div>
-          <div class="loader-line"></div>
-          <div class="loader-line"></div>
-          <div class="loader-line"></div>
-          <div class="loader-line"></div>
-          <div class="loader-line"></div>
-          <div class="loader-line"></div>
+      <Transition name="fade" @after-leave="onHide">
+        <div v-if="ytmViewLoadingStatus != YTMViewStatus.Ready" class="ytmview-loading">
+          <img class="logo" :src="logo" />
+          <div class="music-loader">
+            <div class="loader-line"></div>
+            <div class="loader-line"></div>
+            <div class="loader-line"></div>
+            <div class="loader-line"></div>
+            <div class="loader-line"></div>
+            <div class="loader-line"></div>
+            <div class="loader-line"></div>
+            <div class="loader-line"></div>
+          </div>
+          <p class="ytmview-loading-status">{{ ytmViewLoadingStatusMessage }}</p>
+          <div v-if="ytmViewLoadTimedOut" class="ytmview-loading-timeout">
+            <span>YouTube Music is taking longer than usual to load</span>
+          </div>
         </div>
-        <p class="ytmview-loading-status">{{ ytmViewLoadingStatusMessage }}</p>
-        <!--<p :class="{ 'ytmview-loading-status': true, 'error': ytmViewLoadingError }">{{ ytmViewLoadingStatus }}</p>
-        <p v-if="ytmViewLoadTimedout" class="ytmview-loading-timeout">YouTube Music is taking longer than usual to load</p>-->
-      </div>
-      <div v-if="unresponsive" class="ytmview-unresponsive"></div>
+      </Transition>
+      <Transition name="fade" @after-leave="onHide">
+        <div v-if="unresponsive" class="ytmview-unresponsive"></div>
+      </Transition>
     </div>
   </Transition>
 </template>
@@ -82,7 +99,7 @@ function onHide() {
   display: flex;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(127, 127, 127, 0.5);
   cursor: wait;
 }
 
@@ -96,6 +113,13 @@ function onHide() {
 
 .ytmview-loading-timeout {
   color: #f44336;
+}
+
+.ytmview-loading-timeout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .fade-enter-active,

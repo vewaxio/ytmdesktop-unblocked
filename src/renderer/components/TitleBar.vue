@@ -53,6 +53,10 @@ function restartApplicationForUpdate() {
 const ytmViewUnresponsive = ref<boolean>(false);
 const appUpdateDownloaded = ref<boolean>(false);
 
+window.ytmd.memoryStore.onStateChanged(newState => {
+  ytmViewUnresponsive.value = newState.ytmViewUnresponsive ?? false;
+});
+
 /*if (props.isMainWindow) {
   const memoryStore = window.ytmd.memoryStore;
 

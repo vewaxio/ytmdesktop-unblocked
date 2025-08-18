@@ -2,7 +2,11 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from "electron";
+import { MemoryStoreSchema } from "~shared/store/schema";
+import MemoryStore from "../../store-ipc/memory-store";
 import { WindowsEventArguments } from "~shared/types";
+
+const memoryStore = new MemoryStore<MemoryStoreSchema>();
 
 contextBridge.exposeInMainWorld("ytmd", {
   minimizeWindow: () => ipcRenderer.send("windowControls:minimize"),
@@ -21,5 +25,11 @@ contextBridge.exposeInMainWorld("ytmd", {
   switchFocus: (context: string) => ipcRenderer.send("ytmView:switchFocus", context),
   ytmViewNavigateDefault: () => ipcRenderer.send("ytmView:navigateDefault"),
   ytmViewRecreate: () => ipcRenderer.send("ytmView:recreate"),
-  restartApplicationForUpdate: () => ipcRenderer.send("app:restartApplicationForUpdate")
+  restartApplicationForUpdate: () => ipcRenderer.send("app:restartApplicationForUpdate"),
+
+  memoryStore: {
+    set: (key: string, value: unknown) => memoryStore.set(key, value),
+    get: async (key: keyof MemoryStoreSchema) => await memoryStore.get(key),
+    onStateChanged: (callback: (newState: MemoryStoreSchema, oldState: MemoryStoreSchema) => void) => memoryStore.onStateChanged(callback)
+  }
 });
