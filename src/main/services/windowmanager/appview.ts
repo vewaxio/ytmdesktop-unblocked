@@ -2,7 +2,7 @@ import { app, IpcMainEvent, Rectangle, WebContentsView, WebContentsViewConstruct
 import { AppWindow, AppWindowType } from "./appwindow";
 import assert from "node:assert";
 import log from "electron-log";
-import { EventEmitter } from "node:stream";
+import EventEmitter from "node:events";
 
 export type AppViewEventMap = {
   // AppView related events
