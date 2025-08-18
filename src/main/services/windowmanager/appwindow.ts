@@ -2,8 +2,8 @@ import { app, BaseWindow, BaseWindowConstructorOptions, BrowserWindow, BrowserWi
 import assert from "node:assert";
 import log from "electron-log";
 import { AppView } from "./appview";
-import { EventEmitter } from "node:stream";
-import { AppWindowManager } from ".";
+import AppWindowManager from ".";
+import EventEmitter from "node:events";
 
 export type AppWindowType = "Base" | "Browser";
 export type AppWindowEventMap = {

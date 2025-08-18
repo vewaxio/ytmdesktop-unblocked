@@ -150,7 +150,7 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
           sandbox: true,
           contextIsolation: true,
           partition: app.isPackaged ? "persist:ytmview" : "persist:ytmview-dev",
-          preload: path.join(__dirname, `../renderer/windows/ytmview/preload.js`),
+          preload: path.join(import.meta.dirname, `../renderer/windows/ytmview/preload.js`),
           devTools: !app.isPackaged ? true : configStore.get("developer.enableDevTools"),
           autoplayPolicy: configStore.get("playback.continueWhereYouLeftOffPaused") ? "document-user-activation-required" : "no-user-gesture-required"
         }

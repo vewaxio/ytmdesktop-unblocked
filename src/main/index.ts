@@ -130,7 +130,7 @@ app.on("ready", async () => {
       webPreferences: {
         sandbox: true,
         contextIsolation: true,
-        preload: path.join(__dirname, `../renderer/windows/updater/preload.js`),
+        preload: path.join(import.meta.dirname, `../renderer/windows/updater/preload.js`),
         devTools: !app.isPackaged ? true : configStore.get("developer.enableDevTools")
       }
     }
@@ -226,7 +226,7 @@ app.on("ready", async () => {
         transparent: true,
         sandbox: true,
         contextIsolation: true,
-        preload: path.join(__dirname, `../renderer/windows/main/preload.js`),
+        preload: path.join(import.meta.dirname, `../renderer/windows/main/preload.js`),
         devTools: !app.isPackaged ? true : configStore.get("developer.enableDevTools")
       }
     }
@@ -260,7 +260,7 @@ app.on("ready", async () => {
       webPreferences: {
         sandbox: true,
         contextIsolation: true,
-        preload: path.join(__dirname, `../renderer/windows/titlebar/preload.js`),
+        preload: path.join(import.meta.dirname, `../renderer/windows/titlebar/preload.js`),
         devTools: !app.isPackaged ? true : configStore.get("developer.enableDevTools"),
         additionalArguments: ["is-main-window"]
       }
@@ -330,7 +330,7 @@ app.on("ready", async () => {
         webPreferences: {
           sandbox: true,
           contextIsolation: true,
-          preload: path.join(__dirname, `../renderer/windows/settings/preload.js`),
+          preload: path.join(import.meta.dirname, `../renderer/windows/settings/preload.js`),
           devTools: !app.isPackaged ? true : configStore.get("developer.enableDevTools")
         }
       }

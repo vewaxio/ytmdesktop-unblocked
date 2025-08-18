@@ -1,6 +1,6 @@
-import { EventEmitter } from "stream";
 import { Constructor, DependencyConstructor } from "~shared/types";
 import { ServiceHost } from "./servicehost";
+import EventEmitter from "node:events";
 
 // Enforces TypeScript to not allow overriding a method (MUST NOT BE EXPORTED)
 declare const _never: unique symbol;
