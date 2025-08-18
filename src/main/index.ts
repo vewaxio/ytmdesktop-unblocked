@@ -486,6 +486,9 @@ app.on("ready", async () => {
   ytmViewManager.on("responsive", async () => {
     await mainView.hide(true);
   });
+  ytmViewManager.on("title-updated", title => {
+    mainWindow.setTitle(title + " | YTMDesktop");
+  });
 
   // Initially create the YTM view and attach it
   ytmViewManager.createView();

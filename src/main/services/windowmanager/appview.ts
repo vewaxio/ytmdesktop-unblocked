@@ -19,6 +19,7 @@ export type AppViewEventMap = {
   "webcontents-will-redirect": [Electron.Event<Electron.WebContentsWillRedirectEventParams>];
   "webcontents-unresponsive": [];
   "webcontents-responsive": [];
+  "webcontents-page-title-updated": [Electron.Event, string, boolean];
 };
 
 export type AppViewOptions = {
@@ -306,6 +307,9 @@ export class AppView extends EventEmitter<AppViewEventMap> {
     });
     this.electronView.webContents.on("responsive", () => {
       this.emit("webcontents-responsive");
+    });
+    this.electronView.webContents.on("page-title-updated", (event, title, explicitSet) => {
+      this.emit("webcontents-page-title-updated", event, title, explicitSet);
     });
     //#endregion
   }
