@@ -1,6 +1,6 @@
 import Fastify, { FastifyInstance } from "fastify";
 import FastifyIO from "fastify-socket.io/dist/index";
-import CompanionServerAPIv1 from "./api/v1";
+import CompanionServerAPIv1, { transformPlayerState } from "./api/v1";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import { AuthToken } from "~shared/integrations/companion-server/types";
 import { RemoteSocket } from "socket.io";
@@ -14,7 +14,15 @@ import { MemoryStoreSchema } from "~shared/store/schema";
 import MemoryStore from "../../services/memorystore";
 import ConfigStore from "../../services/configstore";
 import { Constructor } from "~shared/types";
-import Service from "src/main/services/service";
+import Service from "../../services/service";
+import net from "node:net";
+import playerStateStore, { PlayerState } from "../../player-state-store";
+
+const API_VERSIONS = ["v1"];
+// The defaults here are for the IPC server
+// Developer Note: If updating the DEFAULT_API_VERSION ensure that the DEFAULT_TRANSFORM_PLAYER_STATE points to the correct API version
+const DEFAULT_API_VERSION = "v1";
+const DEFAULT_TRANSFORM_PLAYER_STATE = transformPlayerState;
 
 export default class CompanionServer extends Integration {
   public name = "CompanionServer";
@@ -26,6 +34,10 @@ export default class CompanionServer extends Integration {
   private fastifyServer: FastifyInstance;
   private storeListener: () => void | null = null;
   private authWindowTimeout: NodeJS.Timeout | null = null;
+
+  private ipcServer: net.Server;
+  private ipcServerClients: net.Socket[] = [];
+  private stateStoreListener: (state: PlayerState) => void | null = null;
 
   private createServer() {
     const configStore = this.getService(ConfigStore);
@@ -60,7 +72,7 @@ export default class CompanionServer extends Integration {
     });
     this.fastifyServer.get("/metadata", (request, reply) => {
       reply.send({
-        apiVersions: ["v1"]
+        apiVersions: API_VERSIONS
       });
     });
 
@@ -68,6 +80,93 @@ export default class CompanionServer extends Integration {
     this.fastifyServer.ready().then(() => {
       this.fastifyServer.io.on("connection", socket => socket.disconnect());
     });
+  }
+
+  private getIpcPath() {
+    if (process.platform === "win32") {
+      return `\\\\?\\pipe\\ytmdesktop-ipc`;
+    }
+
+    const dirtyPrefix = process.env.XDG_RUNTIME_DIR || process.env.TMPDIR || process.env.TMP || process.env.TEMP || "/tmp";
+    const prefix = dirtyPrefix.replace(/\/$/, "");
+
+    return `${prefix}/ytmdesktop-ipc`;
+  }
+
+  private createIpcServer() {
+    this.ipcServer = net.createServer(socket => {
+      log.info("ipc: client connected");
+      this.ipcServerClients.push(socket);
+      let heartbeated = true;
+      const heartbeatInterval = setInterval(() => {
+        if (!heartbeated) {
+          log.info("ipc: client missed heartbeat - disconnecting");
+          socket.destroy();
+        }
+        heartbeated = false;
+      }, 30 * 1000);
+
+      const helloPayload = Buffer.from(
+        JSON.stringify({
+          version: DEFAULT_API_VERSION
+        })
+      );
+      const buffer = Buffer.alloc(8 + helloPayload.byteLength);
+      buffer.writeInt32LE(0, 0);
+      buffer.writeInt32LE(helloPayload.byteLength, 4);
+      helloPayload.copy(buffer, 8);
+      socket.write(buffer);
+
+      socket.on("data", data => {
+        try {
+          const op = data.readInt32LE(0);
+          if (op == 2) {
+            heartbeated = true;
+            const pong = Buffer.alloc(4);
+            pong.writeInt32LE(3);
+            socket.write(pong);
+          }
+        } catch {
+          socket.destroy();
+        }
+      });
+
+      socket.on("error", error => {
+        log.info(`ipc: client errored ${error}`);
+      });
+
+      socket.on("close", () => {
+        log.info("ipc: client disconnected");
+
+        clearInterval(heartbeatInterval);
+
+        const clientIndex = this.ipcServerClients.indexOf(socket);
+        if (clientIndex !== -1) {
+          this.ipcServerClients.splice(clientIndex, 1);
+        }
+      });
+    });
+
+    const pipePath = this.getIpcPath();
+    this.ipcServer.listen(pipePath, () => {
+      log.info(`ipc: listening on ${pipePath}`);
+    });
+
+    this.stateStoreListener = (state: PlayerState) => {
+      const eventNameBuffer = Buffer.from("state-update");
+      const stateBuffer = Buffer.from(JSON.stringify(DEFAULT_TRANSFORM_PLAYER_STATE(state)));
+      const buffer = Buffer.alloc(12 + eventNameBuffer.byteLength + stateBuffer.byteLength);
+      buffer.writeInt32LE(1, 0);
+      buffer.writeInt32LE(eventNameBuffer.byteLength, 4);
+      buffer.writeInt32LE(stateBuffer.byteLength, 8);
+      eventNameBuffer.copy(buffer, 12);
+      stateBuffer.copy(buffer, 12 + eventNameBuffer.length);
+
+      this.ipcServerClients.forEach(socket => {
+        socket.write(buffer);
+      });
+    };
+    playerStateStore.addEventListener(this.stateStoreListener);
   }
 
   public onSetup() {}
@@ -80,6 +179,8 @@ export default class CompanionServer extends Integration {
       log.info("Refusing to enable Companion Server Integration with reason: safeStorage unavailable");
       return;
     }
+
+    this.createIpcServer();
 
     memoryStore.onStateChanged(this.memoryStoryListenerCallback);
 
@@ -120,6 +221,12 @@ export default class CompanionServer extends Integration {
       await this.fastifyServer.close();
       if (this.storeListener) {
         this.storeListener();
+      }
+    }
+    if (this.ipcServer) {
+      this.ipcServer.close();
+      if (this.stateStoreListener) {
+        playerStateStore.removeEventListener(this.stateStoreListener);
       }
     }
   }
