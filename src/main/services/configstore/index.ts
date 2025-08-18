@@ -51,7 +51,7 @@ export default class ConfigStore extends Service {
         integrations: {
           companionServerEnabled: false,
           companionServerAuthTokens: null,
-          companionServerCORSWildcardEnabled: false,
+          companionServerCORSWildcardEnabled: true,
           discordPresenceEnabled: false,
           lastFMEnabled: false
         },
