@@ -69,6 +69,9 @@ const shortcutThumbsUp = ref<string>(shortcuts.thumbsUp);
 const shortcutThumbsDown = ref<string>(shortcuts.thumbsDown);
 const shortcutVolumeUp = ref<string>(shortcuts.volumeUp);
 const shortcutVolumeDown = ref<string>(shortcuts.volumeDown);
+const shortcutVolumeMute = ref<string>(shortcuts.volumeMute);
+const shortcutToggleShuffle = ref<string>(shortcuts.toggleShuffle);
+const shortcutToggleRepeat = ref<string>(shortcuts.toggleRepeat);
 
 const lastFMSessionKey = ref<string>(lastFM.sessionKey);
 const scrobblePercent = ref<number>(lastFM.scrobblePercent);
@@ -109,6 +112,9 @@ store.onDidAnyChange(async newState => {
   shortcutThumbsDown.value = newState.shortcuts.thumbsDown;
   shortcutVolumeUp.value = newState.shortcuts.volumeUp;
   shortcutVolumeDown.value = newState.shortcuts.volumeDown;
+  shortcutVolumeMute.value = newState.shortcuts.volumeMute;
+  shortcutToggleShuffle.value = newState.shortcuts.toggleShuffle;
+  shortcutToggleRepeat.value = newState.shortcuts.toggleRepeat;
 });
 
 const discordPresenceConnectionFailed = ref<boolean>(await memoryStore.get("discordPresenceConnectionFailed"));
@@ -120,6 +126,9 @@ const shortcutsThumbsUpRegisterFailed = ref<boolean>(await memoryStore.get("shor
 const shortcutsThumbsDownRegisterFailed = ref<boolean>(await memoryStore.get("shortcutsThumbsDownRegisterFailed"));
 const shortcutsVolumeUpRegisterFailed = ref<boolean>(await memoryStore.get("shortcutsVolumeUpRegisterFailed"));
 const shortcutsVolumeDownRegisterFailed = ref<boolean>(await memoryStore.get("shortcutsVolumeDownRegisterFailed"));
+const shortcutsVolumeMuteRegisterFailed = ref<boolean>(await memoryStore.get("shortcutsVolumeMuteRegisterFailed"));
+const shortcutsToggleShuffleRegisterFailed = ref<boolean>(await memoryStore.get("shortcutsToggleShuffleRegisterFailed"));
+const shortcutsToggleRepeatRegisterFailed = ref<boolean>(await memoryStore.get("shortcutsToggleRepeatRegisterFailed"));
 
 const companionServerAuthWindowEnabled = ref<boolean>(await memoryStore.get("companionServerAuthWindowEnabled"));
 
@@ -135,6 +144,9 @@ memoryStore.onStateChanged(newState => {
   shortcutsThumbsDownRegisterFailed.value = newState.shortcutsThumbsDownRegisterFailed;
   shortcutsVolumeUpRegisterFailed.value = newState.shortcutsVolumeUpRegisterFailed;
   shortcutsVolumeDownRegisterFailed.value = newState.shortcutsVolumeDownRegisterFailed;
+  shortcutsVolumeMuteRegisterFailed.value = newState.shortcutsVolumeMuteRegisterFailed;
+  shortcutsToggleShuffleRegisterFailed.value = newState.shortcutsToggleShuffleRegisterFailed;
+  shortcutsToggleRepeatRegisterFailed.value = newState.shortcutsToggleRepeatRegisterFailed;
 
   companionServerAuthWindowEnabled.value = newState.companionServerAuthWindowEnabled;
 
@@ -178,6 +190,9 @@ async function settingsChanged() {
   store.set("shortcuts.thumbsDown", shortcutThumbsDown.value);
   store.set("shortcuts.volumeUp", shortcutVolumeUp.value);
   store.set("shortcuts.volumeDown", shortcutVolumeDown.value);
+  store.set("shortcuts.volumeMute", shortcutVolumeMute.value);
+  store.set("shortcuts.toggleShuffle", shortcutToggleShuffle.value);
+  store.set("shortcuts.toggleRepeat", shortcutToggleRepeat.value);
 }
 
 async function settingChangedRequiresRestart() {
@@ -516,6 +531,39 @@ window.ytmd.handleUpdateDownloaded(() => {
               >
             </p>
             <KeybindInput v-model="shortcutVolumeDown" @change="settingsChanged" />
+          </div>
+          <div class="setting">
+            <p class="shortcut-title">
+              Mute Volume<span
+                v-if="shortcutsVolumeMuteRegisterFailed"
+                class="material-symbols-outlined register-error"
+                title="Failed to register keybind. Does another application have this keybind?"
+                >error</span
+              >
+            </p>
+            <KeybindInput v-model="shortcutVolumeMute" @change="settingsChanged" />
+          </div>
+          <div class="setting">
+            <p class="shortcut-title">
+              Toggle Shuffle<span
+                v-if="shortcutsToggleShuffleRegisterFailed"
+                class="material-symbols-outlined register-error"
+                title="Failed to register keybind. Does another application have this keybind?"
+                >error</span
+              >
+            </p>
+            <KeybindInput v-model="shortcutToggleShuffle" @change="settingsChanged" />
+          </div>
+          <div class="setting">
+            <p class="shortcut-title">
+              Toggle Repeat<span
+                v-if="shortcutsToggleRepeatRegisterFailed"
+                class="material-symbols-outlined register-error"
+                title="Failed to register keybind. Does another application have this keybind?"
+                >error</span
+              >
+            </p>
+            <KeybindInput v-model="shortcutToggleRepeat" @change="settingsChanged" />
           </div>
         </div>
 

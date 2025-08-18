@@ -167,11 +167,50 @@ export function attachIPCListeners() {
         )();
         break;
 
+      case "toggleMute":
+        (
+          await webFrame.executeJavaScript(`
+          (function() {
+            const isMuted = document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.isMuted();
+            if (isMuted) {
+              document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.unMute();
+              window.__YTMD_HOOK__.ytmStore.dispatch({ type: 'SET_MUTED', payload: false });
+            } else {
+              document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.mute();
+              window.__YTMD_HOOK__.ytmStore.dispatch({ type: 'SET_MUTED', payload: true });
+            }
+          })
+        `)
+        )();
+        break;
+
       case "repeatMode":
         (
           await webFrame.executeJavaScript(`
           (function(value) {
             window.__YTMD_HOOK__.ytmStore.dispatch({ type: 'SET_REPEAT', payload: value });
+          })
+        `)
+        )(value);
+        break;
+
+      case "cycleRepeatMode":
+        (
+          await webFrame.executeJavaScript(`
+          (function(value) {
+            let currentRepeatMode = window.__YTMD_HOOK__.ytmStore.getState().queue.repeatMode;
+
+            if (currentRepeatMode === "NONE") {
+              window.__YTMD_HOOK__.ytmStore.dispatch({ type: 'SET_REPEAT', payload: "ALL" });
+            }
+
+            if (currentRepeatMode === "ALL") {
+              window.__YTMD_HOOK__.ytmStore.dispatch({ type: 'SET_REPEAT', payload: "ONE" });
+            }
+
+            if (currentRepeatMode === "ONE") {
+              window.__YTMD_HOOK__.ytmStore.dispatch({ type: 'SET_REPEAT', payload: "NONE" });
+            }
           })
         `)
         )(value);

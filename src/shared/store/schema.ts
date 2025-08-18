@@ -44,6 +44,9 @@ export type StoreSchema = {
     thumbsDown: string;
     volumeUp: string;
     volumeDown: string;
+    volumeMute: string;
+    toggleShuffle: string;
+    toggleRepeat: string;
   };
   state: {
     lastUrl: string;
@@ -73,6 +76,9 @@ export type MemoryStoreSchema = {
   shortcutsThumbsDownRegisterFailed: boolean;
   shortcutsVolumeUpRegisterFailed: boolean;
   shortcutsVolumeDownRegisterFailed: boolean;
+  shortcutsVolumeMuteRegisterFailed: boolean;
+  shortcutsToggleShuffleRegisterFailed: boolean;
+  shortcutsToggleRepeatRegisterFailed: boolean;
   companionServerAuthWindowEnabled: boolean;
   safeStorageAvailable: boolean;
   autoUpdaterDisabled: boolean;
