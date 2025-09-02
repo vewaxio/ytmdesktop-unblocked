@@ -2,6 +2,7 @@
 // https://greasyfork.org/en/scripts/397686-youtube-music-fix-volume-ratio
 // Made by: Marco Pfeiffer <git@marco.zone>
 
+// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 (function() {
   // manipulation exponent, higher value = lower volume
   // 3 is the value used by pulseaudio, which Barteks2x figured out this gist here: https://gist.github.com/Barteks2x/a4e189a36a10c159bb1644ffca21c02a
