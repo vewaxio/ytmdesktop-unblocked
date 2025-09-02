@@ -9,6 +9,7 @@ import { AppView } from "../windowmanager/appview";
 import StateManager from "../statemanager";
 import MemoryStore from "../memorystore";
 import { MemoryStoreSchema } from "~shared/store/schema";
+import AppWindowManager from "../windowmanager";
 
 export type YTMViewManagerEventMap = {
   "status-changed": [];
@@ -51,7 +52,12 @@ function openExternalFromYtmView(urlString: string) {
 }
 
 export default class YTMViewManager extends EventEmitterService<YTMViewManagerEventMap> {
-  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, StateManager, MemoryStore<MemoryStoreSchema>];
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [
+    ConfigStore,
+    StateManager,
+    MemoryStore<MemoryStoreSchema>,
+    AppWindowManager
+  ];
 
   private ytmView: AppView;
   private hooksReady = false;
@@ -117,6 +123,7 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     const configStore = this.getDependency(ConfigStore);
     const stateManager = this.getDependency(StateManager);
     const memoryStore = this.getDependency(MemoryStore<MemoryStoreSchema>);
+    const windowManager = this.getDependency(AppWindowManager);
 
     this.setStatus(YTMViewStatus.Loading);
 
@@ -388,6 +395,13 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
         lastPlaylistId: playlistId
       });
       playerStateStore.updateVideoDetails(videoDetails, playlistId, album, likeStatus, hasFullMetadata);
+
+      const mainWindow = windowManager.getWindow("Main");
+      if (mainWindow && hasFullMetadata) {
+        mainWindow.setTitle(`${videoDetails.title} - ${videoDetails.author} | YouTube Music Desktop App`);
+      } else {
+        mainWindow.setTitle("YouTube Music Desktop App");
+      }
     });
     this.ytmView.ipcOn("ytmApi:storeStateChanged", (_event, queue, likeStatus, volume, muted, adPlaying) => {
       playerStateStore.updateFromStore(queue, likeStatus, volume, muted, adPlaying);
