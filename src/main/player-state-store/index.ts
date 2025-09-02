@@ -67,6 +67,7 @@ export type PlayerQueue = {
   items: PlayerQueueItem[];
   repeatMode: RepeatMode;
   selectedItemIndex: number;
+  shuffleEnabled: boolean;
 };
 
 export type PlayerState = {
@@ -142,6 +143,7 @@ type YTMPlayerQueue = {
   isInfinite: boolean;
   items: YTMPlayerQueueItem[];
   repeatMode: YTMRepeatMode;
+  shuffleEnabled: boolean;
 };
 
 type YTMVideoDetails = {
@@ -396,7 +398,8 @@ class PlayerStateStore {
           // YTM has a native selectedItemIndex property but that isn't updated correctly so we calculate it ourselves
           selectedItemIndex: queueItems.findIndex(item => {
             return item.selected;
-          })
+          }),
+          shuffleEnabled: queueState.shuffleEnabled
         }
       : null;
     if (this.videoDetails) {
