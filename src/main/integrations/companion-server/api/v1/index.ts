@@ -53,7 +53,8 @@ export const transformPlayerState = (state: PlayerState) => {
             isGenerating: state.queue.isGenerating,
             isInfinite: state.queue.isInfinite,
             repeatMode: state.queue.repeatMode,
-            selectedItemIndex: state.queue.selectedItemIndex
+            selectedItemIndex: state.queue.selectedItemIndex,
+            shuffleEnabled: state.queue.shuffleEnabled
           }
         : null
     },
