@@ -84,10 +84,12 @@ export default class EnhancedMediaService extends Integration {
     this.mediaPlayer.playButtonEnabled = true;
     this.mediaPlayer.previousButtonEnabled = true;
     this.mediaPlayer.seekEnabled = true;
+
+    this.mediaPlayer.deactivate();
   }
 
   private async playerStateChanged(state: PlayerState) {
-    if (this.isEnabled && state.videoDetails) {
+    if (this.isEnabled && state.videoDetails && state.hasFullMetadata) {
       let needUpdate = false;
       if (state.videoDetails.title !== this.lastVideoDetailsTitle) {
         this.lastVideoDetailsTitle = state.videoDetails.title;
