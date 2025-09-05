@@ -23,18 +23,24 @@ window.ytmd.autoUpdater.onError(() => {
 
 <template>
   <div class="app-updater-container">
-    <img class="logo" draggable="false" :src="logo" />
+    <img
+      class="logo"
+      draggable="false"
+      :src="logo"
+    >
     <div class="music-loader">
-      <div class="loader-line"></div>
-      <div class="loader-line"></div>
-      <div class="loader-line"></div>
-      <div class="loader-line"></div>
-      <div class="loader-line"></div>
-      <div class="loader-line"></div>
-      <div class="loader-line"></div>
-      <div class="loader-line"></div>
+      <div class="loader-line" />
+      <div class="loader-line" />
+      <div class="loader-line" />
+      <div class="loader-line" />
+      <div class="loader-line" />
+      <div class="loader-line" />
+      <div class="loader-line" />
+      <div class="loader-line" />
     </div>
-    <p class="status-text">{{ appLoadingStatus }}</p>
+    <p class="status-text">
+      {{ appLoadingStatus }}
+    </p>
   </div>
 </template>
 

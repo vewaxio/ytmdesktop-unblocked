@@ -26,7 +26,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="keyboardFocusZero" tabindex="0"></div>
+  <div
+    ref="keyboardFocusZero"
+    tabindex="0"
+  />
   <TitleBar
     :is-main-window="isMainWindow"
     :has-home-button="isMainWindow"
@@ -36,5 +39,8 @@ onMounted(() => {
     title="YouTube Music Desktop App"
     :icon-file="logo"
   />
-  <div ref="keyboardFocus" tabindex="32767"></div>
+  <div
+    ref="keyboardFocus"
+    tabindex="32767"
+  />
 </template>

@@ -51,29 +51,55 @@ function onHide() {
 </script>
 
 <template>
-  <Transition name="fade" @after-leave="onHide">
-    <div v-if="!hide" class="ytmview-loading-container">
-      <Transition name="fade" @after-leave="onHide">
-        <div v-if="ytmViewLoadingStatus != YTMViewStatus.Ready" class="ytmview-loading">
-          <img class="logo" :src="logo" />
+  <Transition
+    name="fade"
+    @after-leave="onHide"
+  >
+    <div
+      v-if="!hide"
+      class="ytmview-loading-container"
+    >
+      <Transition
+        name="fade"
+        @after-leave="onHide"
+      >
+        <div
+          v-if="ytmViewLoadingStatus != YTMViewStatus.Ready"
+          class="ytmview-loading"
+        >
+          <img
+            class="logo"
+            :src="logo"
+          >
           <div class="music-loader">
-            <div class="loader-line"></div>
-            <div class="loader-line"></div>
-            <div class="loader-line"></div>
-            <div class="loader-line"></div>
-            <div class="loader-line"></div>
-            <div class="loader-line"></div>
-            <div class="loader-line"></div>
-            <div class="loader-line"></div>
+            <div class="loader-line" />
+            <div class="loader-line" />
+            <div class="loader-line" />
+            <div class="loader-line" />
+            <div class="loader-line" />
+            <div class="loader-line" />
+            <div class="loader-line" />
+            <div class="loader-line" />
           </div>
-          <p class="ytmview-loading-status">{{ ytmViewLoadingStatusMessage }}</p>
-          <div v-if="ytmViewLoadTimedOut" class="ytmview-loading-timeout">
+          <p class="ytmview-loading-status">
+            {{ ytmViewLoadingStatusMessage }}
+          </p>
+          <div
+            v-if="ytmViewLoadTimedOut"
+            class="ytmview-loading-timeout"
+          >
             <span>YouTube Music is taking longer than usual to load</span>
           </div>
         </div>
       </Transition>
-      <Transition name="fade" @after-leave="onHide">
-        <div v-if="unresponsive" class="ytmview-unresponsive"></div>
+      <Transition
+        name="fade"
+        @after-leave="onHide"
+      >
+        <div
+          v-if="unresponsive"
+          class="ytmview-unresponsive"
+        />
       </Transition>
     </div>
   </Transition>
