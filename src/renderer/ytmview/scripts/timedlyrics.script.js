@@ -114,7 +114,7 @@
       } else {
         currentTimedLyrics = null;
       }
-    } catch (err) {
+    } catch {
       /* empty */
     }
   }

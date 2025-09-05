@@ -10,6 +10,7 @@
   const EXPONENT = 3;
 
   const storedOriginalVolumes = new WeakMap();
+  // eslint-disable-next-line no-undef
   const HTMLMediaElement_volume = {get, set} = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'volume');
   Object.defineProperty(HTMLMediaElement.prototype, 'volume', {
       get () {
@@ -39,5 +40,6 @@
   window.HTMLMediaElement_volume = HTMLMediaElement_volume;
 
   // Electron is not happy with returning the element, so we just give it an empty string.
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   '';
 })
