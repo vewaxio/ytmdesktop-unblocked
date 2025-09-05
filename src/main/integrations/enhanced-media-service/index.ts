@@ -1,8 +1,8 @@
-import { app, BrowserView } from "electron";
+import { app } from "electron";
 import playerStateStore, { PlayerState, Thumbnail, VideoState } from "../../player-state-store";
-import IIntegration from "../integration";
 import { MediaPlayer, MediaPlayerMediaType, MediaPlayerPlaybackStatus, MediaPlayerThumbnail, MediaPlayerThumbnailType } from "xosms";
 import Integration from "../integration";
+import ConfigStore from "../../services/configstore";
 import YTMViewManager from "../../services/ytmviewmanager";
 
 function getHighestResThumbnail(thumbnails: Thumbnail[]) {
@@ -20,10 +20,9 @@ function getHighestResThumbnail(thumbnails: Thumbnail[]) {
 }
 
 export default class EnhancedMediaService extends Integration {
-  public override name = "EnhancedMediaService";
-  public override storeEnableProperty: Integration["storeEnableProperty"] = "integrations.enhancedMediaServiceEnabled";
-  
-  private enabled = false;
+  public name = "EnhancedMediaService";
+  public storeEnableProperty: Integration["storeEnableProperty"] = "integrations.enhancedMediaServiceEnabled";
+
   private stateCallback: (event: PlayerState) => void = null;
   private mediaPlayer: MediaPlayer = new MediaPlayer("ytmdesktop", "YouTube Music Desktop App");
 
@@ -40,55 +39,43 @@ export default class EnhancedMediaService extends Integration {
     super();
 
     this.mediaPlayer.on("buttonpressed", (_error: unknown, button: string) => {
-      const ytmViewManager = this.getService(YTMViewManager);
-      const ytmView = ytmViewManager.getView();
-
-      if (ytmView) {
-        switch (button) {
-          case "playpause":
-            ytmView.webContents.send("remoteControl:execute", "playPause");
-            break;
-          case "play":
-            ytmView.webContents.send("remoteControl:execute", "play");
-            break;
-          case "pause":
-            ytmView.webContents.send("remoteControl:execute", "pause");
-            break;
-          case "stop":
-            ytmView.webContents.send("remoteControl:execute", "pause");
-            break;
-          case "next":
-            ytmView.webContents.send("remoteControl:execute", "next");
-            break;
-          case "previous":
-            ytmView.webContents.send("remoteControl:execute", "previous");
-            break;
-          default:
-            break;
-        }
+      const ytmView = this.getService(YTMViewManager).getView();
+      switch (button) {
+        case "playpause":
+          ytmView.webContents.send("remoteControl:execute", "playPause");
+          break;
+        case "play":
+          ytmView.webContents.send("remoteControl:execute", "play");
+          break;
+        case "pause":
+          ytmView.webContents.send("remoteControl:execute", "pause");
+          break;
+        case "stop":
+          ytmView.webContents.send("remoteControl:execute", "pause");
+          break;
+        case "next":
+          ytmView.webContents.send("remoteControl:execute", "next");
+          break;
+        case "previous":
+          ytmView.webContents.send("remoteControl:execute", "previous");
+          break;
       }
     });
-
     this.mediaPlayer.on("positionchanged", (_error: unknown, position: number) => {
-      const ytmViewManager = this.getService(YTMViewManager);
-      const ytmView = ytmViewManager.getView();
-
-      if (ytmView) {
-        if (position >= 0 && position <= playerStateStore.getState().videoDetails.durationSeconds)
-          ytmView.webContents.send("remoteControl:execute", "seekTo", position);
-      }
+      const ytmView = this.getService(YTMViewManager).getView();
+      if (position >= 0 && position <= playerStateStore.getState().videoDetails.durationSeconds)
+        ytmView.webContents.send("remoteControl:execute", "seekTo", position);
     });
     this.mediaPlayer.on("positionseeked", (_error: unknown, seek: number) => {
-      if (this.ytmView !== null) {
-        let newProgress = playerStateStore.getState().videoProgress + seek;
-        if (newProgress <= 0) newProgress = 0;
+      const ytmView = this.getService(YTMViewManager).getView();
+      let newProgress = playerStateStore.getState().videoProgress + seek;
+      if (newProgress <= 0) newProgress = 0;
 
-        // Behavior aligns with MPRIS documentation
-        if (newProgress > playerStateStore.getState().videoDetails.durationSeconds) {
-          this.ytmView.webContents.send("remoteControl:execute", "next");
-        } else {
-          this.ytmView.webContents.send("remoteControl:execute", "seekTo", newProgress);
-        }
+      // Behavior aligns with MPRIS documentation
+      if (newProgress > playerStateStore.getState().videoDetails.durationSeconds) {
+        ytmView.webContents.send("remoteControl:execute", "next");
+      } else {
+        ytmView.webContents.send("remoteControl:execute", "seekTo", newProgress);
       }
     });
 
@@ -98,31 +85,9 @@ export default class EnhancedMediaService extends Integration {
     this.mediaPlayer.previousButtonEnabled = true;
     this.mediaPlayer.seekEnabled = true;
   }
-  
-  public override onSetup(): void {
-    app.commandLine.appendSwitch("disable-features", "MediaSessionService");
-  }
 
-  public override onEnabled(): void {
-    this.mediaPlayer.activate();
-    this.mediaPlayer.mediaType = MediaPlayerMediaType.Music;
-    this.enabled = true;
-    this.stateCallback = event => {
-      this.playerStateChanged(event);
-    };
-    playerStateStore.addEventListener(this.stateCallback);
-  }
-  
-  public override onDisabled(): void {
-    this.mediaPlayer.deactivate();
-    this.enabled = false;
-    if (this.stateCallback) {
-      playerStateStore.removeEventListener(this.stateCallback);
-    }
-  }
-
-  private playerStateChanged(state: PlayerState) {
-    if (this.enabled && state.videoDetails) {
+  private async playerStateChanged(state: PlayerState) {
+    if (this.isEnabled && state.videoDetails) {
       let needUpdate = false;
       if (state.videoDetails.title !== this.lastVideoDetailsTitle) {
         this.lastVideoDetailsTitle = state.videoDetails.title;
@@ -181,8 +146,30 @@ export default class EnhancedMediaService extends Integration {
       if (needUpdate) {
         this.mediaPlayer.update();
       }
-    } else if (this.enabled && !state.videoDetails) {
+    } else if (this.isEnabled && !state.videoDetails) {
       this.mediaPlayer.playbackStatus = MediaPlayerPlaybackStatus.Stopped;
+    }
+  }
+
+  public onSetup() {
+    if (this.getService(ConfigStore).get("integrations.enhancedMediaServiceEnabled")) {
+      app.commandLine.appendSwitch("disable-features", "MediaSessionService");
+    }
+  }
+
+  public onEnabled(): void {
+    this.mediaPlayer.activate();
+    this.mediaPlayer.mediaType = MediaPlayerMediaType.Music;
+    this.stateCallback = event => {
+      this.playerStateChanged(event);
+    };
+    playerStateStore.addEventListener(this.stateCallback);
+  }
+
+  public onDisabled(): void {
+    this.mediaPlayer.deactivate();
+    if (this.stateCallback) {
+      playerStateStore.removeEventListener(this.stateCallback);
     }
   }
 }
