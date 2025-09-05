@@ -20,7 +20,11 @@ export default function nodeNativesPlugin(): PluginOption {
       });
 
       return {
-        code: `export default require("./${fileName}");`,
+        code: `
+          import { createRequire } from "node:module";
+
+          const require = createRequire(import.meta.url);
+          export default require("./${fileName}");`,
         syntheticNamedExports: true
       };
     },
