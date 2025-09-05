@@ -17,22 +17,28 @@ export function attachIPCListeners() {
     switch (command) {
       case "playPause": {
         (
-          await webFrame.executeJavaScript(`
+          await webFrame.executeJavaScript(
+            `
           (function() {
             document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playing ? document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.pauseVideo() : document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.playVideo();
           })
-        `)
+        `,
+            true
+          )
         )();
         break;
       }
 
       case "play": {
         (
-          await webFrame.executeJavaScript(`
+          await webFrame.executeJavaScript(
+            `
           (function() {
             document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.playVideo();
           })
-        `)
+        `,
+            true
+          )
         )();
         break;
       }
@@ -297,7 +303,6 @@ export function attachIPCListeners() {
         break;
       }
 
-      
       case "queueAdd": {
         await (
           await webFrame.executeJavaScript(queueAddScript)
