@@ -40,6 +40,7 @@
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.34.0",
     "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/multicast-dns": "^7.2.4",
     "@types/node": "^22.17.2",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
@@ -72,6 +73,7 @@
     "fastify": "^5.5.0",
     "fastify-socket.io": "^5.1.0",
     "material-symbols": "^0.12.0",
+    "multicast-dns": "^7.2.5",
     "socket.io": "^4.8.1",
     "vue": "^3.5.18",
     "xosms": "patch:xosms@npm%3A0.6.2#~/.yarn/patches/xosms-npm-0.6.2-71193f184f.patch"

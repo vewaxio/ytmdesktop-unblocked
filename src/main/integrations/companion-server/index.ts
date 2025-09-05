@@ -17,6 +17,8 @@ import { Constructor } from "~shared/types";
 import Service from "../../services/service";
 import net from "node:net";
 import playerStateStore, { PlayerState } from "../../player-state-store";
+import mDNS from "multicast-dns";
+import os from "node:os";
 
 const API_VERSIONS = ["v1"];
 // The defaults here are for the IPC server
@@ -38,6 +40,8 @@ export default class CompanionServer extends Integration {
   private ipcServer: net.Server;
   private ipcServerClients: net.Socket[] = [];
   private stateStoreListener: (state: PlayerState) => void | null = null;
+
+  private mdns: mDNS;
 
   private createServer() {
     const configStore = this.getService(ConfigStore);
@@ -169,6 +173,95 @@ export default class CompanionServer extends Integration {
     playerStateStore.addEventListener(this.stateStoreListener);
   }
 
+  private createMdnsServer() {
+    this.mdns = mDNS();
+
+    const hostname = os.hostname();
+    const aRecords = [];
+
+    const interfaces = os.networkInterfaces();
+    for (const deviceName in interfaces) {
+      const iface = interfaces[deviceName];
+
+      for (const alias of iface) {
+        if (alias.family === "IPv4" && !alias.internal) {
+          aRecords.push({
+            name: `${hostname}._ytmdesktop._tcp.local`,
+            type: "A",
+            ttl: 60,
+            data: alias.address
+          });
+        }
+      }
+    }
+
+    this.mdns.on("query", query => {
+      for (const question of query.questions) {
+        if (question.name === "_services._dns-sd._udp.local") {
+          this.mdns.respond({
+            answers: [
+              {
+                name: `_services._dns-sd._udp.local`,
+                type: "PTR",
+                ttl: 3960,
+                data: `_ytmdesktop._tcp.local`
+              }
+            ]
+          });
+        }
+
+        if (question.name === "_ytmdesktop._tcp.local") {
+          this.mdns.respond({
+            answers: [
+              {
+                name: `_ytmdesktop._tcp.local`,
+                type: "PTR",
+                ttl: 60,
+                data: `${hostname}._ytmdesktop._tcp.local`
+              }
+            ]
+          });
+        }
+
+        if (question.name === `${hostname}._ytmdesktop._tcp.local`) {
+          const compiledAnswers = [];
+          if (question.type === "SRV") {
+            compiledAnswers.push({
+              name: `${hostname}._ytmdesktop._tcp.local`,
+              type: "SRV",
+              data: {
+                port: 9863,
+                weight: 0,
+                priority: 0,
+                target: `${hostname}._ytmdesktop._tcp.local`
+              }
+            });
+            compiledAnswers.push(...aRecords);
+          }
+
+          if (question.type === "TXT") {
+            compiledAnswers.push({
+              name: `${hostname}._ytmdesktop._tcp.local`,
+              type: "TXT",
+              ttl: 60,
+              data: ""
+            });
+          }
+
+          if (question.type === "A") {
+            compiledAnswers.push(...aRecords);
+          }
+
+          this.mdns.respond({
+            answers: compiledAnswers
+          });
+        }
+      }
+    });
+
+    log.info("mdns: created mdns server");
+  }
+
   public onSetup() {}
 
   public async onEnabled() {
@@ -211,6 +304,8 @@ export default class CompanionServer extends Integration {
         }
       });
     }
+
+    this.createMdnsServer();
   }
 
   public async onDisabled() {
@@ -228,6 +323,9 @@ export default class CompanionServer extends Integration {
       if (this.stateStoreListener) {
         playerStateStore.removeEventListener(this.stateStoreListener);
       }
+    }
+    if (this.mdns) {
+      this.mdns.destroy();
     }
   }
 
