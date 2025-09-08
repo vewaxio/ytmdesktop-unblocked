@@ -5,7 +5,6 @@ import Miniplayer from "./Miniplayer.vue";
 const alwaysOnTop = ref(true);
 
 window.ytmd.handleWindowEvents(windowState => {
-  console.log(windowState);
   alwaysOnTop.value = windowState.alwaysOnTop;
 });
 
