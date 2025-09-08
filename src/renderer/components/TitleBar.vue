@@ -243,7 +243,7 @@ window.ytmd.memoryStore.onStateChanged(newState => {
   font-size: 14px;
 }
 
-.app-button {
+:deep(.app-button) {
   margin-right: 4px;
   height: 28px;
   width: 28px;
@@ -263,11 +263,11 @@ window.ytmd.memoryStore.onStateChanged(newState => {
   cursor: pointer;
 }
 
-.app-button:hover {
+:deep(.app-button:hover) {
   background-color: #222222;
 }
 
-.app-button > .material-symbols-outlined {
+:deep(.app-button) > .material-symbols-outlined {
   font-size: 20px;
   color: #b4b4b4;
 }

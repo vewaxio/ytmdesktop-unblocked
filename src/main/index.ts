@@ -26,6 +26,7 @@ import StateManager from "./services/statemanager";
 import MemoryStore from "./services/memorystore";
 import { MemoryStoreSchema, TrayIconStyle } from "~shared/store/schema";
 import ProtocolManager from "./services/protocolmanager";
+import playerStateStore from "./player-state-store";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -346,6 +347,58 @@ app.on("ready", async () => {
       };
     });
   });
+
+  mainWindow.ipcOn("window:openMiniplayer", () => {
+    if (windowManager.hasWindow("Miniplayer")) {
+      windowManager.getWindow("Miniplayer").showAndFocus();
+      return;
+    }
+
+    const mainWindowBounds = mainWindow._getElectronWindow().getBounds();
+    const miniplayerWindow = windowManager.createWindow("Browser", {
+      name: "Miniplayer",
+      autoRecreate: false,
+      waitForViews: true,
+      url: app.isPackaged ? "ytmd-app://miniplayer" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/miniplayer/index.html",
+      electronOptions: {
+        width: 600,
+        height: 400,
+        minWidth: 240,
+        minHeight: 240,
+        x: Math.round(mainWindowBounds.x + (mainWindowBounds.width / 2 - 400)),
+        y: Math.round(mainWindowBounds.y + (mainWindowBounds.height / 2 - 300)),
+        minimizable: false,
+        maximizable: false,
+        frame: false,
+        show: false,
+        alwaysOnTop: true,
+        icon: getIconPath("ytmd.png"),
+        titleBarStyle: "hidden",
+        webPreferences: {
+          sandbox: true,
+          contextIsolation: true,
+          preload: path.join(import.meta.dirname, `../renderer/windows/miniplayer/preload.js`),
+          devTools: !app.isPackaged ? true : configStore.get("developer.enableDevTools")
+        }
+      }
+    });
+
+    miniplayerWindow.once("electronwindow-close", () => {
+      mainWindow.showAndFocus();
+    });
+
+    miniplayerWindow.ipcOn("remoteControl:execute", (event, command: string, ...args: unknown[]) => {
+      const ytmView = ytmViewManager.getView();
+      if (ytmView) ytmView.webContents.send("remoteControl:execute", command, ...args);
+    });
+
+    miniplayerWindow.ipcHandle("playerStateStore:getState", () => {
+      return playerStateStore.getState();
+    });
+
+    mainWindow.hide();
+  });
+
   mainWindow.ipcOn("ytmView:navigateDefault", () => {
     const ytmView = ytmViewManager.getView();
     if (ytmView) ytmView.webContents.loadURL("https://music.youtube.com/");
@@ -395,6 +448,10 @@ app.on("ready", async () => {
       label: "Show/Hide Window",
       type: "normal",
       click: () => {
+        if (windowManager.hasWindow("Miniplayer")) {
+          windowManager.getWindow("Miniplayer").closeWindow();
+        }
+
         if (mainWindow.isVisible()) {
           mainWindow.hide();
         } else {

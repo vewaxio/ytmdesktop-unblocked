@@ -2,6 +2,7 @@ import { WindowsEventArguments, YTMViewStatus } from "~shared/types";
 import Store from "../store-ipc/store";
 import { StoreSchema, MemoryStoreSchema } from "~shared/store/schema";
 import MemoryStore from "../store-ipc/memory-store";
+import { PlayerState } from "~shared/playerstatestore/types";
 
 declare global {
   interface Window {
@@ -44,6 +45,7 @@ declare global {
       maximizeWindow(): void;
       restoreWindow(): void;
       closeWindow(): void;
+      setAlwaysOnTopWindow(alwaysOnTop: boolean): void;
       handleWindowEvents(callback: (args: WindowsEventArguments) => void);
       requestWindowState(): void;
 
@@ -56,6 +58,13 @@ declare global {
       handleUpdateDownloaded(callback: () => void);
       isAppUpdateAvailable(): Promise<boolean>;
       isAppUpdateDownloaded(): Promise<boolean>;
+
+      // Miniplayer specific
+      playerStore: {
+        getState(): PlayerState | null;
+        handleStateChanged(callback: (state: PlayerState) => void);
+      };
+      executeCommandInYTMView(command: string, ...args: unknown[]);
     };
   }
 

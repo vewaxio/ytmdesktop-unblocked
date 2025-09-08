@@ -23,6 +23,10 @@ onMounted(() => {
 
   window.ytmd.requestWindowState();
 });
+
+function openMiniplayer() {
+  window.ytmd.openMiniplayerWindow();
+}
 </script>
 
 <template>
@@ -38,6 +42,16 @@ onMounted(() => {
     has-maximize-button
     title="YouTube Music Desktop App"
     :icon-file="logo"
+  >
+    <template #app-buttons>
+      <button
+        class="app-button"
+        @click="openMiniplayer"
+      >
+        <span class="material-symbols-outlined">pip</span>
+      </button>
+    </template>
+  </TitleBar>
   />
   <div
     ref="keyboardFocus"

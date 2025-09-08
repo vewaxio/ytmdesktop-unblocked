@@ -2,6 +2,7 @@ export type WindowsEventArguments = {
   minimized: boolean;
   maximized: boolean;
   fullscreen: boolean;
+  alwaysOnTop: boolean;
 };
 
 export enum YTMViewStatus {
