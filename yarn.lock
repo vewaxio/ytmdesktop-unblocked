@@ -5606,10 +5606,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"material-symbols@npm:^0.12.0":
-  version: 0.12.0
-  resolution: "material-symbols@npm:0.12.0"
-  checksum: 10c0/8f2971522d06960cbcf5f6a718a736ee0c50d636506f7dd65902e23adea761f64d10f0a95a13866367c3740d501d623228548ecc93273f7b5e115f4912a1fee8
+"material-symbols@npm:^0.35.0":
+  version: 0.35.0
+  resolution: "material-symbols@npm:0.35.0"
+  checksum: 10c0/10a46858daa99fd512428cad2f9eb592ed2220bf815aaef59efdf01f6a6ba837347a5c86e6b4f7ffd5bc650da03d4a1e33ef0b0435058af991b3aa02c53b4b33
   languageName: node
   linkType: hard
 
@@ -8527,7 +8527,7 @@ __metadata:
     globals: "npm:^16.3.0"
     husky: "npm:^9.1.7"
     lint-staged: "npm:^16.1.6"
-    material-symbols: "npm:^0.12.0"
+    material-symbols: "npm:^0.35.0"
     multicast-dns: "npm:^7.2.5"
     prettier: "npm:3.6.2"
     socket.io: "npm:^4.8.1"

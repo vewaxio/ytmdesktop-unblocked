@@ -385,9 +385,17 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     // YTM API IPC
     this.ytmView.ipcOn("ytmApi:videoProgressChanged", (_event, progress) => {
       playerStateStore.updateVideoProgress(progress);
+
+      if (windowManager.hasWindow("Miniplayer")) {
+        windowManager.getWindow("Miniplayer").ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
+      }
     });
     this.ytmView.ipcOn("ytmApi:videoStateChanged", (_event, state) => {
       playerStateStore.updateVideoState(state);
+
+      if (windowManager.hasWindow("Miniplayer")) {
+        windowManager.getWindow("Miniplayer").ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
+      }
     });
     this.ytmView.ipcOn("ytmApi:videoDataChanged", (_event, videoDetails, playlistId, album, likeStatus, hasFullMetadata) => {
       stateManager.updateState({
@@ -395,6 +403,17 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
         lastPlaylistId: playlistId
       });
       playerStateStore.updateVideoDetails(videoDetails, playlistId, album, likeStatus, hasFullMetadata);
+
+      if (windowManager.hasWindow("Miniplayer")) {
+        const miniplayerWindow = windowManager.getWindow("Miniplayer");
+        miniplayerWindow.ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
+
+        if (hasFullMetadata) {
+          miniplayerWindow.setTitle(`${videoDetails.title} - ${videoDetails.author} | YouTube Music Desktop App - Miniplayer`);
+        } else {
+          miniplayerWindow.setTitle("YouTube Music Desktop App - Miniplayer");
+        }
+      }
 
       const mainWindow = windowManager.getWindow("Main");
       if (mainWindow && hasFullMetadata) {
@@ -405,6 +424,10 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     });
     this.ytmView.ipcOn("ytmApi:storeStateChanged", (_event, queue, likeStatus, volume, muted, adPlaying) => {
       playerStateStore.updateFromStore(queue, likeStatus, volume, muted, adPlaying);
+
+      if (windowManager.hasWindow("Miniplayer")) {
+        windowManager.getWindow("Miniplayer").ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
+      }
     });
   }
 

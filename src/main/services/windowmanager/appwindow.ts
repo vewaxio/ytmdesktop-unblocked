@@ -1,4 +1,13 @@
-import { app, BaseWindow, BaseWindowConstructorOptions, BrowserWindow, BrowserWindowConstructorOptions, IpcMainEvent, Rectangle } from "electron";
+import {
+  app,
+  BaseWindow,
+  BaseWindowConstructorOptions,
+  BrowserWindow,
+  BrowserWindowConstructorOptions,
+  IpcMainEvent,
+  IpcMainInvokeEvent,
+  Rectangle
+} from "electron";
 import assert from "node:assert";
 import log from "electron-log";
 import { AppView } from "./appview";
@@ -131,7 +140,6 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
   public closeWindow() {
     assert(this.destroyed === false, new Error("This AppWindow is destroyed"));
 
-    this.requestedClosure = true;
     this.electronWindow.close();
   }
 
@@ -230,6 +238,18 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
     for (const appView of Object.values(this.activeViews)) {
       appView.view.webContents?.send(channel, ...args);
     }
+  }
+
+  public ipcHandle(channel: string, listener: (event: IpcMainInvokeEvent, ...args: unknown[]) => Promise<unknown> | unknown) {
+    assert(this.windowType === "Browser", new Error("Attempted to detach an ipc event but the current window isn't of type 'Browser'"));
+
+    (this.electronWindow as BrowserWindow).webContents.ipc.handle(channel, listener);
+  }
+
+  public ipcRemoveHandler(channel: string) {
+    assert(this.windowType === "Browser", new Error("Attempted to detach an ipc event but the current window isn't of type 'Browser'"));
+
+    (this.electronWindow as BrowserWindow).webContents.ipc.removeHandler(channel);
   }
 
   public showAndFocus() {
@@ -364,7 +384,8 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
     (this.electronWindow as BrowserWindow).webContents.send("windowControls:stateChanged", {
       minimized: this.electronWindow.isMinimized(),
       maximized: this.electronWindow.isMaximized(),
-      fullscreen: this.electronWindow.isFullScreen()
+      fullscreen: this.electronWindow.isFullScreen(),
+      alwaysOnTop: this.electronWindow.isAlwaysOnTop()
     });
   }
 
@@ -432,6 +453,9 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
       browserWindow.webContents.ipc.on("windowControls:close", () => {
         this.closeWindow();
       });
+      browserWindow.webContents.ipc.on("windowControls:setAlwaysOnTop", (event, alwaysOnTop: boolean) => {
+        this.electronWindow.setAlwaysOnTop(alwaysOnTop);
+      });
       browserWindow.webContents.ipc.on("windowControls:requestState", () => {
         this.sendWindowControlsStateIpc();
       });
@@ -439,6 +463,7 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
       browserWindow.on("maximize", this.sendWindowControlsStateIpc.bind(this));
       browserWindow.on("unmaximize", this.sendWindowControlsStateIpc.bind(this));
       browserWindow.on("restore", this.sendWindowControlsStateIpc.bind(this));
+      browserWindow.on("always-on-top-changed", this.sendWindowControlsStateIpc.bind(this));
       browserWindow.webContents.on("render-process-gone", () => {
         log.debug(`AppWindow '${this.name}' webContents render process gone`);
         this.recreateWindowInternal();
