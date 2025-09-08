@@ -1,7 +1,7 @@
 import { shell, safeStorage } from "electron";
 import cypto from "crypto";
 
-import playerStateStore, { PlayerState, VideoDetails, VideoState } from "../../player-state-store";
+import playerStateStore from "../../player-state-store";
 
 import { LastfmErrorResponse, LastfmRequestBody, LastfmSessionResponse, LastfmTokenResponse } from "./schemas";
 import log from "electron-log";
@@ -9,6 +9,7 @@ import Integration from "../integration";
 import memoryStore from "../../services/memorystore";
 import configStore from "../../services/configstore";
 import { StoreSchema } from "~shared/store/schema";
+import { PlayerState, VideoDetails, VideoState } from "~shared/playerstatestore/types";
 
 export default class LastFM extends Integration {
   public name = "LastFM";

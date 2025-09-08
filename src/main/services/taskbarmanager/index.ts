@@ -1,13 +1,14 @@
 import { nativeImage } from "electron";
 import log from "electron-log";
 import { getControlsIconPath } from "../../util";
-import playerStateStore, { VideoState } from "../../player-state-store";
+import playerStateStore from "../../player-state-store";
 import Service from "../service";
 import { StoreSchema } from "~shared/store/schema";
 import ConfigStore from "../configstore";
 import AppWindowManager from "../windowmanager";
 import YTMViewManager from "../ytmviewmanager";
 import { DependencyConstructor } from "~shared/types";
+import { VideoState } from "~shared/playerstatestore/types";
 
 export default class TaskbarManager extends Service {
   public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, AppWindowManager, YTMViewManager];

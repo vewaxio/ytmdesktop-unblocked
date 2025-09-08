@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { RepeatMode } from "../../../player-state-store";
+import { RepeatMode } from "~shared/playerstatestore/types";
 
 export const APIV1CommandRequestBody = Type.Union([
   Type.Object({

@@ -1,10 +1,11 @@
-import playerStateStore, { PlayerState, Thumbnail, VideoState, VideoDetails } from "../../player-state-store";
+import playerStateStore from "../../player-state-store";
 import DiscordClient from "./minimal-discord-client";
 import log from "electron-log";
 import { DiscordActivityType } from "./minimal-discord-client/types";
 import Integration from "../integration";
 import MemoryStore from "../../services/memorystore";
 import { MemoryStoreSchema } from "~shared/store/schema";
+import { PlayerState, Thumbnail, VideoDetails, VideoState } from "~shared/playerstatestore/types";
 
 const DISCORD_CLIENT_ID = "1143202598460076053";
 

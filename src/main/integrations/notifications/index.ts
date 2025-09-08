@@ -1,7 +1,8 @@
 import { Notification, NotificationConstructorOptions, nativeImage } from "electron";
-import playerStateStore, { PlayerState, Thumbnail, VideoDetails, VideoState } from "../../player-state-store";
+import playerStateStore from "../../player-state-store";
 import https from "https";
 import Integration from "../integration";
+import { PlayerState, Thumbnail, VideoDetails, VideoState } from "~shared/playerstatestore/types";
 
 // Visualiser - https://apps.microsoft.com/store/detail/notifications-visualizer/9NBLGGH5XSL1?hl=en-gb&gl=gb&rtc=1
 // Documentation / Examples - https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/adaptive-interactive-toasts?tabs=xml

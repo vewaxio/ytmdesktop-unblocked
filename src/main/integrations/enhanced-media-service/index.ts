@@ -1,9 +1,10 @@
 import { app } from "electron";
-import playerStateStore, { PlayerState, Thumbnail, VideoState } from "../../player-state-store";
+import playerStateStore from "../../player-state-store";
 import { MediaPlayer, MediaPlayerMediaType, MediaPlayerPlaybackStatus, MediaPlayerThumbnail, MediaPlayerThumbnailType } from "xosms";
 import Integration from "../integration";
 import ConfigStore from "../../services/configstore";
 import YTMViewManager from "../../services/ytmviewmanager";
+import { PlayerState, Thumbnail, VideoState } from "~shared/playerstatestore/types";
 
 function getHighestResThumbnail(thumbnails: Thumbnail[]) {
   let currentWidth = 0;

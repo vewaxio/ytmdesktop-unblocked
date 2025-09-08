@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { FastifyPluginCallback, FastifyPluginOptions } from "fastify";
-import playerStateStore, { PlayerState, RepeatMode } from "../../../../player-state-store";
+import playerStateStore from "../../../../player-state-store";
 import { createAuthToken, getIsTemporaryAuthCodeValidAndRemove, getTemporaryAuthCode, isAuthValid, isAuthValidMiddleware } from "../../api-shared/auth";
 import fastifyRateLimit from "@fastify/rate-limit";
 import crypto from "crypto";
@@ -35,6 +35,7 @@ import YTMViewManager from "../../../../services/ytmviewmanager";
 import MemoryStore from "../../../../services/memorystore";
 import { MemoryStoreSchema } from "~shared/store/schema";
 import ConfigStore from "../../../../services/configstore";
+import { PlayerState, RepeatMode } from "~shared/playerstatestore/types";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
