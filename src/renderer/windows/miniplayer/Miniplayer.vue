@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef } from "vue";
+import { nextTick, onMounted, ref, useTemplateRef } from "vue";
 import { PlayerState, Thumbnail, VideoState } from "~shared/playerstatestore/types";
 
 const state = ref<PlayerState | null>(null);
@@ -12,6 +12,9 @@ const videoLength = ref(0);
 const videoId = ref("");
 
 const seekbarContainer = useTemplateRef("seekbarContainer");
+const infoContainer = useTemplateRef("infoContainer");
+const infoTitle = useTemplateRef("infoTitle");
+//const infoDetails = useTemplateRef("infoDetails");
 
 function getHighestResThumbnail(thumbnails: Thumbnail[]): string {
   return thumbnails.reduce(
@@ -22,22 +25,49 @@ function getHighestResThumbnail(thumbnails: Thumbnail[]): string {
 
 let seekbarDragging = false;
 
+function stateChanged(newState) {
+  state.value = newState;
+
+  if (newState.videoDetails && newState.videoDetails.id != videoId.value) {
+    thumbnailUrl.value = getHighestResThumbnail(newState.videoDetails?.thumbnails);
+    videoLength.value = newState.videoDetails.durationSeconds;
+    videoId.value = newState.videoDetails.id;
+
+    nextTick(() => {
+      reconcileMarquee();
+    });
+  }
+
+  if (!seekbarDragging) {
+    videoProgress.value = newState.videoProgress;
+  }
+}
+
+function reconcileMarquee() {
+  if (infoTitle.value) {
+    if (infoTitle.value.scrollWidth > infoContainer.value.clientWidth) {
+      infoTitle.value.classList.add("marquee");
+    } else {
+      infoTitle.value.classList.remove("marquee");
+    }
+  }
+
+  /*if (infoDetails.value.scrollWidth > infoContainer.value.clientWidth) {
+    infoDetails.value.classList.add("marquee");
+  } else {
+    infoDetails.value.classList.remove("marquee");
+  }*/
+}
+
 onMounted(() => {
   window.ytmd.playerStore.handleStateChanged(newState => {
-    state.value = newState;
-
-    if (newState.videoDetails.id != videoId.value) {
-      thumbnailUrl.value = getHighestResThumbnail(newState.videoDetails?.thumbnails);
-      videoLength.value = newState.videoDetails.durationSeconds;
-      videoId.value = newState.videoDetails.id;
-    }
-
-    if (!seekbarDragging) {
-      videoProgress.value = newState.videoProgress;
-    }
+    stateChanged(newState);
   });
 
   window.ytmd.requestWindowState();
+  stateChanged(state.value);
+
+  reconcileMarquee();
 });
 
 const seekHandleVisible = ref(false);
@@ -73,12 +103,13 @@ function seek(event) {
 
 document.addEventListener("mousemove", event => {
   if (!seekbarDragging) return;
-  seek(event);
+  if (event.clientX > -1) {
+    seek(event);
+  }
 });
 
-document.addEventListener("mouseup", event => {
+document.addEventListener("mouseup", () => {
   if (seekbarDragging) {
-    seek(event);
     seekbarDragging = false;
 
     document.body.style.userSelect = null;
@@ -94,10 +125,15 @@ function playPauseVideo() {
 function nextVideo() {
   window.ytmd.executeCommandInYTMView("next");
 }
+
+window.addEventListener("resize", reconcileMarquee);
 </script>
 
 <template>
-  <div class="container">
+  <div
+    v-if="state.videoDetails != null"
+    class="container"
+  >
     <div class="thumbnail-container">
       <img
         class="thumbnail"
@@ -107,6 +143,21 @@ function nextVideo() {
       >
     </div>
     <div class="video-data">
+      <div
+        ref="infoContainer"
+        class="video-info"
+      >
+        <span
+          ref="infoTitle"
+          class="title"
+        >{{ state.videoDetails?.title }}</span>
+        <!-- Maybe introduce author and album details later? -->
+        <!--<span ref="infoDetails" class="details">
+          <span class="author"
+            >{{ state.videoDetails?.author }}<span v-if="state.videoDetails?.album" class="album"> • {{ state.videoDetails?.album }}</span></span
+          >
+        </span>-->
+      </div>
       <div
         ref="seekbarContainer"
         class="seekbar-container"
@@ -123,7 +174,7 @@ function nextVideo() {
             v-if="seekHandleVisible"
             id="handle"
             class="handle"
-            :style="{ left: `${((videoProgress - 2) / videoLength) * 100}%` }"
+            :style="{ left: `${((videoProgress - 3) / videoLength) * 100}%` }"
           />
         </div>
       </div>
@@ -154,7 +205,7 @@ function nextVideo() {
             <span
               v-if="state.trackState == VideoState.Unknown"
               class="icon material-symbols-outlined"
-            >data_saver_off</span>
+            >play_arrow</span>
           </button>
           <button
             class="next"
@@ -163,17 +214,14 @@ function nextVideo() {
             <span class="icon material-symbols-outlined">skip_next</span>
           </button>
         </div>
-        <div class="video-info">
-          <span class="title">{{ state.videoDetails?.title }}</span>
-          <span class="details">
-            <span class="author">{{ state.videoDetails?.author }}<span
-              v-if="state.videoDetails?.album"
-              class="album"
-            > • {{ state.videoDetails?.album }}</span></span>
-          </span>
-        </div>
       </div>
     </div>
+  </div>
+  <div
+    v-else
+    class="container unavailable"
+  >
+    <p>Video is still loading or no video loaded</p>
   </div>
 </template>
 
@@ -184,6 +232,11 @@ function nextVideo() {
   flex-direction: column;
   min-height: calc(100vh - 36px);
   max-height: calc(100vh - 36px);
+}
+
+.container.unavailable {
+  justify-content: center;
+  align-items: center;
 }
 
 .thumbnail-container {
@@ -201,7 +254,7 @@ function nextVideo() {
 
 .video-data {
   display: flex;
-  height: 80px;
+  height: 80px; /* 96px if infoDetails is present */
   flex-direction: column;
   -webkit-app-region: no-drag;
 }
@@ -209,7 +262,9 @@ function nextVideo() {
 .video-controls {
   display: flex;
   flex: 1;
-  max-height: 62px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .controls {
@@ -227,9 +282,11 @@ function nextVideo() {
 
 .video-info {
   display: flex;
-  flex: 1;
   flex-direction: column;
   justify-content: center;
+  max-height: 38px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .video-info .title {
@@ -241,6 +298,11 @@ function nextVideo() {
   display: flex;
   justify-content: center;
   color: #bbbbbb;
+}
+
+.marquee {
+  display: inline-flex;
+  animation: marquee 16s linear infinite;
 }
 
 .seekbar-container {
@@ -271,5 +333,14 @@ function nextVideo() {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 </style>
