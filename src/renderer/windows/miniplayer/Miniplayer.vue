@@ -14,7 +14,6 @@ const videoId = ref("");
 const seekbarContainer = useTemplateRef("seekbarContainer");
 const infoContainer = useTemplateRef("infoContainer");
 const infoTitle = useTemplateRef("infoTitle");
-//const infoDetails = useTemplateRef("infoDetails");
 
 function getHighestResThumbnail(thumbnails: Thumbnail[]): string {
   return thumbnails.reduce(
@@ -51,12 +50,6 @@ function reconcileMarquee() {
       infoTitle.value.classList.remove("marquee");
     }
   }
-
-  /*if (infoDetails.value.scrollWidth > infoContainer.value.clientWidth) {
-    infoDetails.value.classList.add("marquee");
-  } else {
-    infoDetails.value.classList.remove("marquee");
-  }*/
 }
 
 onMounted(() => {
@@ -150,13 +143,7 @@ window.addEventListener("resize", reconcileMarquee);
         <span
           ref="infoTitle"
           class="title"
-        >{{ state.videoDetails?.title }}</span>
-        <!-- Maybe introduce author and album details later? -->
-        <!--<span ref="infoDetails" class="details">
-          <span class="author"
-            >{{ state.videoDetails?.author }}<span v-if="state.videoDetails?.album" class="album"> • {{ state.videoDetails?.album }}</span></span
-          >
-        </span>-->
+        >{{ state.videoDetails?.title }} • {{ state.videoDetails?.author }}</span>
       </div>
       <div
         ref="seekbarContainer"
@@ -254,7 +241,7 @@ window.addEventListener("resize", reconcileMarquee);
 
 .video-data {
   display: flex;
-  height: 80px; /* 96px if infoDetails is present */
+  height: 80px;
   flex-direction: column;
   -webkit-app-region: no-drag;
 }
