@@ -54,7 +54,7 @@ export default class ConfigStore extends Service {
           companionServerCORSWildcardEnabled: true,
           discordPresenceEnabled: false,
           lastFMEnabled: false,
-          enhancedMediaServiceEnabled: true,
+          enhancedMediaServiceEnabled: true
         },
         shortcuts: {
           playPause: "",
@@ -73,7 +73,8 @@ export default class ConfigStore extends Service {
           lastPlaylistId: "",
           lastVideoId: "",
           windowBounds: null,
-          windowMaximized: false
+          windowMaximized: false,
+          miniplayerWindowBounds: null
         },
         lastfm: {
           // Last FM Keys belong to @Alipoodle
@@ -127,6 +128,10 @@ export default class ConfigStore extends Service {
 
           if (!store.has("integrations.enhancedMediaServiceEnabled")) {
             store.set("integrations.enhancedMediaServiceEnabled", true);
+          }
+
+          if (!store.has("state.miniplayerWindowBounds")) {
+            store.set("state.miniplayerWindowBounds", null);
           }
         }
       }

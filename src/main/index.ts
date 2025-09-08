@@ -292,6 +292,13 @@ app.on("ready", async () => {
   // This event is not called if the app is quitting
   // Do not put critical clean up code here
   mainWindow.on("electronwindow-close", event => {
+    stateManager.updateState({
+      windowBounds: mainWindow._getElectronWindow().getBounds()
+    });
+    stateManager.updateState({
+      windowMaximized: mainWindow._getElectronWindow().isMaximized()
+    });
+
     if (configStore.get("general.hideToTrayOnClose")) {
       event.preventDefault();
       mainWindow.hide();
@@ -354,6 +361,9 @@ app.on("ready", async () => {
       return;
     }
 
+    const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
+    const windowBounds = configStore.get("state.miniplayerWindowBounds");
+
     const mainWindowBounds = mainWindow._getElectronWindow().getBounds();
     const miniplayerWindow = windowManager.createWindow("Browser", {
       name: "Miniplayer",
@@ -361,12 +371,12 @@ app.on("ready", async () => {
       waitForViews: true,
       url: app.isPackaged ? "ytmd-app://miniplayer" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/miniplayer/index.html",
       electronOptions: {
-        width: 600,
-        height: 400,
+        width: windowBounds?.width ?? 600 / scaleFactor,
+        height: windowBounds?.height ?? 400 / scaleFactor,
         minWidth: 240,
         minHeight: 240,
-        x: Math.round(mainWindowBounds.x + (mainWindowBounds.width / 2 - 400)),
-        y: Math.round(mainWindowBounds.y + (mainWindowBounds.height / 2 - 300)),
+        x: windowBounds?.x ?? Math.round(mainWindowBounds.x + (mainWindowBounds.width / 2 - 400)),
+        y: windowBounds?.y ?? Math.round(mainWindowBounds.y + (mainWindowBounds.height / 2 - 300)),
         minimizable: false,
         maximizable: false,
         frame: false,
@@ -383,7 +393,21 @@ app.on("ready", async () => {
       }
     });
 
+    miniplayerWindow.on("electronwindow-resize", () => {
+      stateManager.updateState({
+        miniplayerWindowBounds: miniplayerWindow._getElectronWindow().getBounds()
+      });
+    });
+    miniplayerWindow.on("electronwindow-move", () => {
+      stateManager.updateState({
+        miniplayerWindowBounds: miniplayerWindow._getElectronWindow().getBounds()
+      });
+    });
+
     miniplayerWindow.once("electronwindow-close", () => {
+      stateManager.updateState({
+        miniplayerWindowBounds: miniplayerWindow._getElectronWindow().getBounds()
+      });
       mainWindow.showAndFocus();
     });
 

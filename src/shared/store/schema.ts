@@ -55,6 +55,7 @@ export type StoreSchema = {
     lastVideoId: string;
     windowBounds: Electron.Rectangle | null;
     windowMaximized: boolean;
+    miniplayerWindowBounds: Electron.Rectangle | null;
   };
   lastfm: {
     api_key: string;
