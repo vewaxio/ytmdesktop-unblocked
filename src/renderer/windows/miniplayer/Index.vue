@@ -62,4 +62,8 @@ function pinUnpinMiniplayer() {
   height: 36px;
   -webkit-app-region: no-drag;
 }
+
+.topbar .icon {
+  font-size: 20px;
+}
 </style>

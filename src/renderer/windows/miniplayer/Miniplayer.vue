@@ -59,8 +59,6 @@ onMounted(() => {
 
   window.ytmd.requestWindowState();
   stateChanged(state.value);
-
-  reconcileMarquee();
 });
 
 const seekHandleVisible = ref(false);
