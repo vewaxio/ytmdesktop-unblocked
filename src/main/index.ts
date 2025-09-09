@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, powerMonitor, safeStorage, screen, shell, Tray } from "electron";
+import { app, clipboard, dialog, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, powerMonitor, safeStorage, screen, shell, Tray } from "electron";
 import log from "electron-log";
 import { getIconPath, v1ConfigMigration } from "./util";
 import { AppView } from "./services/windowmanager/appview";
@@ -545,15 +545,21 @@ app.on("ready", async () => {
         const unsetFlags = setupFlagNames.filter(key => (setupFlags & YTMViewSetupCompletionFlags[key]) === 0);
 
         const dialogMessage =
-          `Features from YouTube Music Desktop App may not be present or function correctly\n\nHook log:\n${setFlags.map(flag => `    ${flag}... OK\n`).join("")}${unsetFlags.map(flag => `    ${flag}... FAIL\n`).join("")}\n` +
+          `Features from YouTube Music Desktop App may not be present or function correctly\n\nThis usually means there's a bug and a bug report should be filed on the GitHub\n\nHook log:\n${setFlags.map(flag => `    ${flag}... OK\n`).join("")}${unsetFlags.map(flag => `    ${flag}... FAIL\n`).join("")}\n` +
           `${hookError.stack}`;
-        dialog.showMessageBox({
-          title: "Hook Error",
-          message: "YouTube Music Desktop App could not hook YouTube Music",
-          detail: dialogMessage,
-          type: "warning",
-          buttons: ["I understand"]
-        });
+        dialog
+          .showMessageBox({
+            title: "Hook Error",
+            message: "YouTube Music Desktop App could not hook YouTube Music",
+            detail: dialogMessage,
+            type: "warning",
+            buttons: ["Copy to Clipboard and I understand", "I understand"]
+          })
+          .then(result => {
+            if (result.response === 0) {
+              clipboard.writeText(`${dialogMessage}`);
+            }
+          });
       }
     } else {
       await mainView.show(true);
