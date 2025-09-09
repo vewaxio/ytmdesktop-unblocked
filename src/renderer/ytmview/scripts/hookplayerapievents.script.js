@@ -62,11 +62,9 @@
 
     const progressState = document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.getProgressState();
     window.ytmd.sendVideoProgress(progressState.current);
-    console.log(progressState.current);
 
     const videoState = document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.getPlayerState();
     window.ytmd.sendVideoState(videoState);
-    console.log(videoState);
 
     sendVideoData();
   }
