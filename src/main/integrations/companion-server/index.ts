@@ -1,6 +1,6 @@
 import Fastify, { FastifyInstance } from "fastify";
 import FastifyIO from "fastify-socket.io/dist/index";
-import CompanionServerAPIv1, { transformPlayerState } from "./api/v1";
+import CompanionServerAPIv1, { transformPlayerState as transformPlayerStatev1 } from "./api/v1";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import { AuthToken } from "~shared/integrations/companion-server/types";
 import { RemoteSocket } from "socket.io";
@@ -16,15 +16,24 @@ import ConfigStore from "../../services/configstore";
 import { Constructor } from "~shared/types";
 import Service from "../../services/service";
 import net from "node:net";
-import playerStateStore, { PlayerState } from "../../player-state-store";
+import playerStateStore from "../../player-state-store";
 import mDNS from "multicast-dns";
 import os from "node:os";
+import CompanionServerIpcClient from "./ipc-client";
+import { PlayerState } from "~shared/playerstatestore/types";
 
 const API_VERSIONS = ["v1"];
-// The defaults here are for the IPC server
-// Developer Note: If updating the DEFAULT_API_VERSION ensure that the DEFAULT_TRANSFORM_PLAYER_STATE points to the correct API version
-const DEFAULT_API_VERSION = "v1";
-const DEFAULT_TRANSFORM_PLAYER_STATE = transformPlayerState;
+const TRANSFORM_PLAYER_STATE_FOR_VERSION: { [version: string]: (state: PlayerState) => unknown } = {
+  v1: transformPlayerStatev1
+};
+
+enum IpcOpcode {
+  HELLO = 0,
+  SELECT_VERSION = 1,
+  EVENT = 2,
+  PING = 3,
+  PONG = 4
+}
 
 export default class CompanionServer extends Integration {
   public name = "CompanionServer";
@@ -38,7 +47,7 @@ export default class CompanionServer extends Integration {
   private authWindowTimeout: NodeJS.Timeout | null = null;
 
   private ipcServer: net.Server;
-  private ipcServerClients: net.Socket[] = [];
+  private ipcServerClients: CompanionServerIpcClient[] = [];
   private stateStoreListener: (state: PlayerState) => void | null = null;
 
   private mdns: mDNS;
@@ -100,7 +109,8 @@ export default class CompanionServer extends Integration {
   private createIpcServer() {
     this.ipcServer = net.createServer(socket => {
       log.info("ipc: client connected");
-      this.ipcServerClients.push(socket);
+      const ipcClient = new CompanionServerIpcClient(socket);
+      this.ipcServerClients.push(ipcClient);
       let heartbeated = true;
       const heartbeatInterval = setInterval(() => {
         if (!heartbeated) {
@@ -112,22 +122,43 @@ export default class CompanionServer extends Integration {
 
       const helloPayload = Buffer.from(
         JSON.stringify({
-          version: DEFAULT_API_VERSION
+          apiVersions: API_VERSIONS
         })
       );
       const buffer = Buffer.alloc(8 + helloPayload.byteLength);
-      buffer.writeInt32LE(0, 0);
+      buffer.writeInt32LE(IpcOpcode.HELLO, 0);
       buffer.writeInt32LE(helloPayload.byteLength, 4);
       helloPayload.copy(buffer, 8);
       socket.write(buffer);
 
       socket.on("data", data => {
         try {
-          const op = data.readInt32LE(0);
-          if (op == 2) {
+          const op: IpcOpcode = data.readInt32LE(0);
+          if (op === IpcOpcode.SELECT_VERSION) {
+            if (ipcClient.version) {
+              socket.destroy();
+              return;
+            }
+
+            const versionStringLength = data.readInt32LE(4);
+            if (versionStringLength > 255) {
+              socket.destroy();
+              return;
+            }
+            const selectedVersion = data.toString("utf-8", 8, 8 + versionStringLength);
+            if (API_VERSIONS.indexOf(selectedVersion) === -1) {
+              socket.destroy();
+              return;
+            }
+
+            log.info(`ipc: client selected api version ${selectedVersion}`);
+            ipcClient.version = selectedVersion;
+          }
+
+          if (op === IpcOpcode.PING) {
             heartbeated = true;
             const pong = Buffer.alloc(4);
-            pong.writeInt32LE(3);
+            pong.writeInt32LE(IpcOpcode.PONG);
             socket.write(pong);
           }
         } catch {
@@ -144,7 +175,7 @@ export default class CompanionServer extends Integration {
 
         clearInterval(heartbeatInterval);
 
-        const clientIndex = this.ipcServerClients.indexOf(socket);
+        const clientIndex = this.ipcServerClients.indexOf(ipcClient);
         if (clientIndex !== -1) {
           this.ipcServerClients.splice(clientIndex, 1);
         }
@@ -158,16 +189,17 @@ export default class CompanionServer extends Integration {
 
     this.stateStoreListener = (state: PlayerState) => {
       const eventNameBuffer = Buffer.from("state-update");
-      const stateBuffer = Buffer.from(JSON.stringify(DEFAULT_TRANSFORM_PLAYER_STATE(state)));
-      const buffer = Buffer.alloc(12 + eventNameBuffer.byteLength + stateBuffer.byteLength);
-      buffer.writeInt32LE(1, 0);
-      buffer.writeInt32LE(eventNameBuffer.byteLength, 4);
-      buffer.writeInt32LE(stateBuffer.byteLength, 8);
-      eventNameBuffer.copy(buffer, 12);
-      stateBuffer.copy(buffer, 12 + eventNameBuffer.length);
-
-      this.ipcServerClients.forEach(socket => {
-        socket.write(buffer);
+      this.ipcServerClients.forEach(ipcClient => {
+        if (ipcClient.version) {
+          const stateBuffer = Buffer.from(JSON.stringify(TRANSFORM_PLAYER_STATE_FOR_VERSION[ipcClient.version](state)));
+          const buffer = Buffer.alloc(12 + eventNameBuffer.byteLength + stateBuffer.byteLength);
+          buffer.writeInt32LE(IpcOpcode.EVENT, 0);
+          buffer.writeInt32LE(eventNameBuffer.byteLength, 4);
+          buffer.writeInt32LE(stateBuffer.byteLength, 8);
+          eventNameBuffer.copy(buffer, 12);
+          stateBuffer.copy(buffer, 12 + eventNameBuffer.length);
+          ipcClient.socket.write(buffer);
+        }
       });
     };
     playerStateStore.addEventListener(this.stateStoreListener);
