@@ -120,17 +120,6 @@ export default class CompanionServer extends Integration {
         heartbeated = false;
       }, 30 * 1000);
 
-      const helloPayload = Buffer.from(
-        JSON.stringify({
-          apiVersions: API_VERSIONS
-        })
-      );
-      const buffer = Buffer.alloc(8 + helloPayload.byteLength);
-      buffer.writeInt32LE(IpcOpcode.HELLO, 0);
-      buffer.writeInt32LE(helloPayload.byteLength, 4);
-      helloPayload.copy(buffer, 8);
-      socket.write(buffer);
-
       socket.on("data", data => {
         try {
           const op: IpcOpcode = data.readInt32LE(0);
