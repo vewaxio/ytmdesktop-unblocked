@@ -104,5 +104,9 @@
     }
   });
 
-  hydrateApplicationState();
+  try {
+    // Attempt to do an initial state hydration for the app
+    // TODO: This should be made more reliable as this can sometimes fail even if a video is loaded on startup
+    hydrateApplicationState();
+  } catch { /* empty */ }
 })
