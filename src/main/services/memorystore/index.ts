@@ -3,6 +3,7 @@ import EventEmitter from "events";
 import { DependencyConstructor, Paths, ValueAtPath } from "~shared/types";
 import Service from "../service";
 import AppWindowManager from "../windowmanager";
+import log from "electron-log";
 
 export default class MemoryStore<T extends Record<string, unknown>> extends Service {
   public static override readonly dependencies: DependencyConstructor<Service>[] = [AppWindowManager];
@@ -19,6 +20,8 @@ export default class MemoryStore<T extends Record<string, unknown>> extends Serv
     ipcMain.on("memoryStore:set", (_event, key, value) => {
       return this.set(key, value);
     });
+
+    log.info("MemoryStore initialized");
   }
   public override onPostInitialized() {}
   public override onTerminated() {}

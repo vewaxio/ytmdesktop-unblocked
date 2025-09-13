@@ -74,6 +74,6 @@ export abstract class EventEmitterService<T extends Record<keyof T, unknown[]>> 
   }
 
   protected emit<E extends Extract<keyof T, string>>(event: E, ...args: T[E]): boolean {
-    return this.eventEmitter.emit(event, args);
+    return this.eventEmitter.emit(event, ...args);
   }
 }

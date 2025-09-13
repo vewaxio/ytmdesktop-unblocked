@@ -16,11 +16,11 @@ import ConfigStore from "../../services/configstore";
 import { Constructor } from "~shared/types";
 import Service from "../../services/service";
 import net from "node:net";
-import playerStateStore from "../../player-state-store";
 import mDNS from "multicast-dns";
 import os from "node:os";
 import CompanionServerIpcClient from "./ipc-client";
 import { PlayerState } from "~shared/playerstatestore/types";
+import PlayerStateStore from "../../services/playerstatestore";
 
 const API_VERSIONS = ["v1"];
 const TRANSFORM_PLAYER_STATE_FOR_VERSION: { [version: string]: (state: PlayerState) => unknown } = {
@@ -191,7 +191,8 @@ export default class CompanionServer extends Integration {
         }
       });
     };
-    playerStateStore.addEventListener(this.stateStoreListener);
+    const playerStateStore = this.getService(PlayerStateStore);
+    playerStateStore.on("state-changed", this.stateStoreListener);
   }
 
   private createMdnsServer() {

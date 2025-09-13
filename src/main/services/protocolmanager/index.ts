@@ -47,6 +47,8 @@ export default class ProtocolManager extends Service {
         app.setAsDefaultProtocolClient("ytmd", process.execPath);
       }
     }
+
+    log.info("ProtocolManager initialized");
   }
 
   public override onPostInitialized(): void {}

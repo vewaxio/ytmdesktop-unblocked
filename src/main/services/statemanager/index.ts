@@ -3,6 +3,7 @@ import Service from "../service";
 import ConfigStore from "../configstore";
 import WatchDog from "../watchdog";
 import { DependencyConstructor } from "~shared/types";
+import log from "electron-log";
 
 function shallowEqual<T extends Record<string, unknown>>(obj1: T, obj2: T): boolean {
   return Object.keys(obj1).length === Object.keys(obj2).length && Object.keys(obj1).every(key => Object.hasOwn(obj2, key) && obj1[key] === obj2[key]);
@@ -27,6 +28,8 @@ export default class StateManager extends Service {
   public onInitialized() {
     if (this._initialized) throw new Error("StateManager is already initialized!");
     this._initialized = true;
+
+    log.info("StateManager initialized");
   }
 
   public override onPostInitialized() {

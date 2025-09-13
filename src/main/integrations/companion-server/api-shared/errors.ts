@@ -1,5 +1,5 @@
 import createError, { FastifyError } from "@fastify/error";
-import { RepeatMode } from "../../../player-state-store";
+import { RepeatMode } from "~shared/playerstatestore/types";
 
 const errorCodes = [
   "INVALID_VOLUME",

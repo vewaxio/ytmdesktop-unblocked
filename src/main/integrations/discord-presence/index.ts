@@ -1,4 +1,4 @@
-import playerStateStore from "../../player-state-store";
+import PlayerStateStore from "../../services/playerstatestore";
 import DiscordClient from "./minimal-discord-client";
 import log from "electron-log";
 import { DiscordActivityType } from "./minimal-discord-client/types";
@@ -177,7 +177,8 @@ export default class DiscordPresence extends Integration {
       this.playerStateChanged(event);
     };
 
-    playerStateStore.addEventListener(this.stateCallback);
+    const playerStateStore = this.getService(PlayerStateStore);
+    playerStateStore.on("state-changed", this.stateCallback);
   }
 
   public onDisabled(): void {
@@ -191,7 +192,8 @@ export default class DiscordPresence extends Integration {
     this.activityDebounceTimeout = this.pauseTimeout = this.connectionRetryTimeout = null;
 
     if (this.stateCallback) {
-      playerStateStore.removeEventListener(this.stateCallback);
+      const playerStateStore = this.getService(PlayerStateStore);
+      playerStateStore.off("state-changed", this.stateCallback);
     }
 
     if (!this.discordClient) return;

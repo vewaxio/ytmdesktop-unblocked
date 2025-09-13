@@ -1,3 +1,4 @@
+import log from "electron-log";
 import Service from "../service";
 import { AppWindow, AppWindowOptions, AppWindowType } from "./appwindow";
 
@@ -5,7 +6,9 @@ export default class AppWindowManager extends Service {
   private activeWindows: { [windowName: string]: AppWindow<AppWindowType> } = {};
 
   public override onPreInitialized() {}
-  public override onInitialized() {}
+  public override onInitialized() {
+    log.info("AppWindowManager initialized");
+  }
   public override onPostInitialized() {}
   public override onTerminated() {}
 

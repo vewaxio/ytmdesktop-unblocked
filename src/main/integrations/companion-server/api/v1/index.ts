@@ -1,6 +1,5 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { FastifyPluginCallback, FastifyPluginOptions } from "fastify";
-import playerStateStore from "../../../../player-state-store";
 import { createAuthToken, getIsTemporaryAuthCodeValidAndRemove, getTemporaryAuthCode, isAuthValid, isAuthValidMiddleware } from "../../api-shared/auth";
 import fastifyRateLimit from "@fastify/rate-limit";
 import crypto from "crypto";
@@ -36,6 +35,7 @@ import MemoryStore from "../../../../services/memorystore";
 import { MemoryStoreSchema } from "~shared/store/schema";
 import ConfigStore from "../../../../services/configstore";
 import { PlayerState, RepeatMode } from "~shared/playerstatestore/types";
+import PlayerStateStore from "../../../../services/playerstatestore";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -103,6 +103,7 @@ const authorizationWindows: BrowserWindow[] = [];
 const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> = async (fastify, options) => {
   const sendCommand = (commandRequest: APIV1CommandRequestBodyType) => {
     const ytmViewManager = options.getService(YTMViewManager);
+    const playerStateStore = options.getService(PlayerStateStore);
     const ytmView = ytmViewManager.getView();
     if (ytmView) {
       switch (commandRequest.command) {
@@ -547,6 +548,7 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
       }
     },
     (request, response) => {
+      const playerStateStore = options.getService(PlayerStateStore);
       response.send(transformPlayerState(playerStateStore.getState()));
     }
   );
@@ -578,6 +580,8 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
   );
 
   fastify.ready().then(() => {
+    const playerStateStore = options.getService(PlayerStateStore);
+
     fastify.io.of("/api/v1/realtime").use((socket, next) => {
       const token = socket.handshake.auth.token;
       const [validSession, tokenId] = isAuthValid(options.getService(ConfigStore), token);
@@ -598,7 +602,7 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
     const stateStoreListener = (state: PlayerState) => {
       fastify.io.of("/api/v1/realtime").emit("state-update", transformPlayerState(state));
     };
-    playerStateStore.addEventListener(stateStoreListener);
+    playerStateStore.on("state-changed", stateStoreListener);
 
     const createPlaylistObservedListener = (event: Electron.IpcMainEvent, playlist: Playlist) => {
       const ytmViewManager = options.getService(YTMViewManager);
@@ -621,7 +625,7 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
     fastify.addHook("onClose", () => {
       // This should normally close on its own but we'll make sure it's closed out
       fastify.io.close();
-      playerStateStore.removeEventListener(stateStoreListener);
+      playerStateStore.off("state-changed", stateStoreListener);
       ipcMain.off("ytmView:createPlaylistObserved", createPlaylistObservedListener);
       ipcMain.off("ytmView:deletePlaylistObserved", deletePlaylistObservedListener);
     });

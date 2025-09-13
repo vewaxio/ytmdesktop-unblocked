@@ -1,14 +1,14 @@
 import { shell, safeStorage } from "electron";
 import cypto from "crypto";
 
-import playerStateStore from "../../player-state-store";
+import PlayerStateStore from "../../services/playerstatestore";
+import MemoryStore from "../../services/memorystore";
+import ConfigStore from "../../services/configstore";
 
 import { LastfmErrorResponse, LastfmRequestBody, LastfmSessionResponse, LastfmTokenResponse } from "./schemas";
 import log from "electron-log";
 import Integration from "../integration";
-import memoryStore from "../../services/memorystore";
-import configStore from "../../services/configstore";
-import { StoreSchema } from "~shared/store/schema";
+import { MemoryStoreSchema, StoreSchema } from "~shared/store/schema";
 import { PlayerState, VideoDetails, VideoState } from "~shared/playerstatestore/types";
 
 export default class LastFM extends Integration {
@@ -102,6 +102,8 @@ export default class LastFM extends Integration {
 
       this.updateNowPlaying(state.videoDetails);
 
+      const configStore = this.getService(ConfigStore);
+
       this.lastfmDetails.scrobblePercent = configStore.get("lastfm.scrobblePercent");
       const scrobblePercentDecimal = this.lastfmDetails.scrobblePercent / 100;
       const scrobbleTimeRequired = Math.min(
@@ -175,6 +177,8 @@ export default class LastFM extends Integration {
   public onSetup() {}
 
   public onEnabled(): void {
+    const memoryStore = this.getService(MemoryStore<MemoryStoreSchema>);
+
     if (!memoryStore.get("safeStorageAvailable")) {
       log.info("Refusing to enable LastFM Integration with reason: safeStorage unavailable");
       return;
@@ -187,11 +191,14 @@ export default class LastFM extends Integration {
     }
 
     this.playerStateFunction = (state: PlayerState) => this.updatePlayerState(state);
-    playerStateStore.addEventListener(this.playerStateFunction);
+
+    const playerStateStore = this.getService(PlayerStateStore);
+    playerStateStore.on("state-changed", this.playerStateFunction);
   }
 
   public onDisabled(): void {
-    playerStateStore.removeEventListener(this.playerStateFunction);
+    const playerStateStore = this.getService(PlayerStateStore);
+    playerStateStore.off("state-changed", this.playerStateFunction);
   }
 
   /**
@@ -258,6 +265,7 @@ export default class LastFM extends Integration {
   }
 
   private getSettings(): StoreSchema["lastfm"] {
+    const configStore = this.getService(ConfigStore);
     const decryptedValues = configStore.get("lastfm");
 
     // Grab the session key and token from the store and decrypt them
@@ -283,6 +291,7 @@ export default class LastFM extends Integration {
   }
 
   private async saveSettings(): Promise<void> {
+    const configStore = this.getService(ConfigStore);
     try {
       if (this.lastfmDetails.sessionKey) {
         configStore.set("lastfm.sessionKey", safeStorage.encryptString(this.lastfmDetails.sessionKey).toString("hex"));

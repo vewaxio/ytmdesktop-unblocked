@@ -1,5 +1,6 @@
-import { EventEmitter } from "events";
 import { LikeStatus, PlayerQueue, PlayerQueueItem, PlayerState, RepeatMode, VideoDetails, VideoState, VideoType } from "~shared/playerstatestore/types";
+import { EventEmitterService } from "../service";
+import log from "electron-log";
 
 enum YTMVideoState {
   Unstarted = -1,
@@ -200,7 +201,11 @@ function transformVideoType(videoType: string) {
   }
 }
 
-class PlayerStateStore {
+export type PlayerStateStoreEventMap = {
+  "state-changed": [PlayerState];
+};
+
+export default class PlayerStateStore extends EventEmitterService<PlayerStateStoreEventMap> {
   private videoProgress = 0;
   private state: VideoState = -1;
   private videoDetails: VideoDetails | null = null;
@@ -210,13 +215,13 @@ class PlayerStateStore {
   private muted: boolean = false;
   private adPlaying: boolean = false;
   private hasFullMetadata: boolean = false;
-  private eventEmitter = new EventEmitter();
 
-  constructor() {
-    this.eventEmitter.on("error", error => {
-      console.log("PlayerStateStore EventEmitter threw an error", error);
-    });
+  public override onPreInitialized(): void {}
+  public override onInitialized(): void {
+    log.info("PlayerStateStore initialized");
   }
+  public override onPostInitialized(): void {}
+  public override onTerminated(): void {}
 
   public getState(): PlayerState {
     return {
@@ -242,7 +247,7 @@ class PlayerStateStore {
 
   public updateVideoProgress(progress: number) {
     this.videoProgress = progress;
-    this.eventEmitter.emit("stateChanged", this.getState());
+    this.emit("state-changed", this.getState());
   }
 
   public updateVideoState(state: YTMVideoState) {
@@ -267,7 +272,7 @@ class PlayerStateStore {
         break;
       }
     }
-    this.eventEmitter.emit("stateChanged", this.getState());
+    this.emit("state-changed", this.getState());
   }
 
   public updateVideoDetails(
@@ -292,7 +297,7 @@ class PlayerStateStore {
     };
     this.playlistId = playlistId;
     this.hasFullMetadata = hasFullMetadata;
-    this.eventEmitter.emit("stateChanged", this.getState());
+    this.emit("state-changed", this.getState());
   }
 
   public updateFromStore(
@@ -328,16 +333,6 @@ class PlayerStateStore {
     this.muted = muted === true;
     if (typeof volume === "number" && volume >= 0) this.volume = volume;
 
-    this.eventEmitter.emit("stateChanged", this.getState());
-  }
-
-  public addEventListener(listener: (state: PlayerState) => void) {
-    this.eventEmitter.addListener("stateChanged", listener);
-  }
-
-  public removeEventListener(listener: (state: PlayerState) => void) {
-    this.eventEmitter.removeListener("stateChanged", listener);
+    this.emit("state-changed", this.getState());
   }
 }
-
-export default new PlayerStateStore();

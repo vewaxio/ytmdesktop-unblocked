@@ -1,6 +1,5 @@
 import { app, Menu, session, shell } from "electron";
 import { DependencyConstructor, YTMViewSetupCompletionFlags, YTMViewStatus } from "~shared/types";
-import playerStateStore from "../../player-state-store";
 import log from "electron-log";
 import path from "node:path";
 import Service, { EventEmitterService } from "../service";
@@ -10,6 +9,7 @@ import StateManager from "../statemanager";
 import MemoryStore from "../memorystore";
 import { MemoryStoreSchema } from "~shared/store/schema";
 import AppWindowManager from "../windowmanager";
+import PlayerStateStore from "../playerstatestore";
 
 export type YTMViewManagerEventMap = {
   "status-changed": [];
@@ -56,7 +56,8 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     ConfigStore,
     StateManager,
     MemoryStore<MemoryStoreSchema>,
-    AppWindowManager
+    AppWindowManager,
+    PlayerStateStore
   ];
 
   private ytmView: AppView;
@@ -383,6 +384,8 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     });
 
     // YTM API IPC
+    const playerStateStore = this.getDependency(PlayerStateStore);
+
     this.ytmView.ipcOn("ytmApi:videoProgressChanged", (_event, progress) => {
       playerStateStore.updateVideoProgress(progress);
 

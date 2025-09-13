@@ -1,5 +1,5 @@
 import { app } from "electron";
-import playerStateStore from "../../player-state-store";
+import PlayerStateStore from "../../services/playerstatestore";
 import { MediaPlayer, MediaPlayerMediaType, MediaPlayerPlaybackStatus, MediaPlayerThumbnail, MediaPlayerThumbnailType } from "xosms";
 import Integration from "../integration";
 import ConfigStore from "../../services/configstore";
@@ -64,11 +64,13 @@ export default class EnhancedMediaService extends Integration {
     });
     this.mediaPlayer.on("positionchanged", (_error: unknown, position: number) => {
       const ytmView = this.getService(YTMViewManager).getView();
+      const playerStateStore = this.getService(PlayerStateStore);
       if (position >= 0 && position <= playerStateStore.getState().videoDetails.durationSeconds)
         ytmView.webContents.send("remoteControl:execute", "seekTo", position);
     });
     this.mediaPlayer.on("positionseeked", (_error: unknown, seek: number) => {
       const ytmView = this.getService(YTMViewManager).getView();
+      const playerStateStore = this.getService(PlayerStateStore);
       let newProgress = playerStateStore.getState().videoProgress + seek;
       if (newProgress <= 0) newProgress = 0;
 
@@ -166,13 +168,16 @@ export default class EnhancedMediaService extends Integration {
     this.stateCallback = event => {
       this.playerStateChanged(event);
     };
-    playerStateStore.addEventListener(this.stateCallback);
+
+    const playerStateStore = this.getService(PlayerStateStore);
+    playerStateStore.on("state-changed", this.stateCallback);
   }
 
   public onDisabled(): void {
     this.mediaPlayer.deactivate();
     if (this.stateCallback) {
-      playerStateStore.removeEventListener(this.stateCallback);
+      const playerStateStore = this.getService(PlayerStateStore);
+      playerStateStore.off("state-changed", this.stateCallback);
     }
   }
 }

@@ -26,7 +26,7 @@ import StateManager from "./services/statemanager";
 import MemoryStore from "./services/memorystore";
 import { MemoryStoreSchema, TrayIconStyle } from "~shared/store/schema";
 import ProtocolManager from "./services/protocolmanager";
-import playerStateStore from "./player-state-store";
+import PlayerStateStore from "./services/playerstatestore";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -44,6 +44,7 @@ serviceCollection.addServices([
   MemoryStore<MemoryStoreSchema>,
   AutoUpdater,
   StateManager,
+  PlayerStateStore,
   YTMViewManager,
   ShortcutManager,
   TaskbarManager,

@@ -1,7 +1,6 @@
 import { nativeImage } from "electron";
 import log from "electron-log";
 import { getControlsIconPath } from "../../util";
-import playerStateStore from "../../player-state-store";
 import Service from "../service";
 import { StoreSchema } from "~shared/store/schema";
 import ConfigStore from "../configstore";
@@ -9,9 +8,10 @@ import AppWindowManager from "../windowmanager";
 import YTMViewManager from "../ytmviewmanager";
 import { DependencyConstructor } from "~shared/types";
 import { VideoState } from "~shared/playerstatestore/types";
+import PlayerStateStore from "../playerstatestore";
 
 export default class TaskbarManager extends Service {
-  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, AppWindowManager, YTMViewManager];
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, AppWindowManager, YTMViewManager, PlayerStateStore];
 
   private _initialized = false;
   public get initialized() {
@@ -27,8 +27,9 @@ export default class TaskbarManager extends Service {
   }
   public override onPostInitialized(): void {
     const configStore = this.getDependency(ConfigStore);
+    const playerStateStore = this.getDependency(PlayerStateStore);
 
-    playerStateStore.addEventListener(() => this.reconcileTaskbar());
+    playerStateStore.on("state-changed", () => this.reconcileTaskbar());
     configStore.onDidChange("playback", state => this.reconcileTaskbar(state));
 
     this.reconcileTaskbar();
@@ -39,6 +40,8 @@ export default class TaskbarManager extends Service {
     const windowManager = this.getDependency(AppWindowManager);
     if (windowManager.hasWindow("Main")) {
       const mainWindow = windowManager.getWindow("Main");
+
+      const playerStateStore = this.getDependency(PlayerStateStore);
 
       const playerState = playerStateStore.getState();
       const hasVideo = !!playerState.videoDetails;
