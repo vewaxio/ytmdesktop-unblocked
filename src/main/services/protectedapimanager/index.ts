@@ -79,7 +79,9 @@ export class ProtectedAPI extends EventEmitter {
 
       if (event.data.op === ProtectedAPIOpCode.InvokeResponse) {
         if (this.waitingInvokes.has(event.data.id)) {
-          this.waitingInvokes.get(event.data.id)(...event.data.args);
+          const callback = this.waitingInvokes.get(event.data.id);
+          this.waitingInvokes.delete(event.data.id);
+          callback(...event.data.args);
         }
       }
     });
