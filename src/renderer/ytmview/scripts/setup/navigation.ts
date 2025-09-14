@@ -1,5 +1,3 @@
-import { ipcRenderer } from "electron";
-
 export function createNavigationMenuArrows() {
   // Go back in history
   const historyBackElement = document.createElement("span");
@@ -23,18 +21,25 @@ export function createNavigationMenuArrows() {
     }
   });
 
-  ipcRenderer.on("ytmView:navigationStateChanged", (event, state) => {
-    if (state.canGoBack) {
+  function reconcileNavigationButtons() {
+    if (navigation.canGoBack) {
       historyBackElement.classList.remove("disabled");
     } else {
       historyBackElement.classList.add("disabled");
     }
 
-    if (state.canGoForward) {
+    if (navigation.canGoForward) {
       historyForwardElement.classList.remove("disabled");
     } else {
       historyForwardElement.classList.add("disabled");
     }
+  }
+
+  navigation.addEventListener("navigate", () => {
+    reconcileNavigationButtons();
+  });
+  navigation.addEventListener("currententrychange", () => {
+    reconcileNavigationButtons();
   });
 
   const pivotBar = document.querySelector("ytmusic-pivot-bar-renderer");

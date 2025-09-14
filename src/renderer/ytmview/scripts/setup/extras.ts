@@ -1,15 +1,17 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-(function () {
-  function isExperimentEnabled(experimentFlag) {
-    const flag = window.ytcfg.data_.EXPERIMENT_FLAGS[experimentFlag];
-    if (flag && typeof flag === "string") return flag === "false" ? false : true;
-    return !!flag;
-  }
+import polymerhook from "../polymerhook";
 
-  const ytmStore = window.__YTMD_HOOK__.ytmStore;
-  const wizButtonShapeEnabled = true; // TODO: Remove this - 9/3/2025 YTM did a UI update and the experiment flag associated with this is gone as its now default enabled
+export function overrideHistoryButtonDisplay() {
+  document.querySelector<HTMLElement>("#history-link .history-button").style = "display: inline-block !important;";
+}
 
-  let ytmdControlButtons = {};
+export async function hideChromecastButton() {
+  polymerhook.ytmStore.dispatch({ type: "SET_CAST_AVAILABLE", payload: false });
+}
+
+export async function createAdditionalPlayerBarControls() {
+  const ytmStore = polymerhook.ytmStore;
+
+  const ytmdControlButtons = {};
 
   let currentVideoId = "";
 
@@ -18,14 +20,14 @@
 
   let sleepTimerTimeout = null;
 
-  let libraryButton = document.createElement("yt-button-shape");
+  const libraryButton = document.createElement("yt-button-shape");
   libraryButton.classList.add("ytmd-player-bar-control");
   libraryButton.classList.add("library-button");
-  let libraryButtonData = {
+  const libraryButtonData = {
     focused: false,
     iconPosition: "icon-only",
     onTap: function () {
-      var closePopupEvent = {
+      const closePopupEvent = {
         bubbles: true,
         cancelable: false,
         composed: true,
@@ -36,7 +38,7 @@
           returnValue: []
         }
       };
-      var feedbackEvent = {
+      const feedbackEvent = {
         bubbles: true,
         cancelable: false,
         composed: true,
@@ -56,7 +58,7 @@
       };
       this.dispatchEvent(new CustomEvent("yt-action", closePopupEvent));
       this.dispatchEvent(new CustomEvent("yt-action", feedbackEvent));
-      window.__YTMD_HOOK__.ytmStore.dispatch({
+      polymerhook.ytmStore.dispatch({
         type: "SET_FEEDBACK_TOGGLE_STATE",
         payload: { defaultEndpointFeedbackToken: libraryFeedbackDefaultToken, isToggled: !libraryButtonData.toggled }
       });
@@ -66,28 +68,23 @@
     toggleable: true,
     type: "text"
   };
-  if (wizButtonShapeEnabled) {
-    libraryButton.rawProps = {
-      iconName: "yt-sys-icons:library_add",
-      data: libraryButtonData
-    };
-  } else {
-    libraryButton.set("iconName", "yt-sys-icons:library_add");
-    libraryButton.set("data", libraryButtonData);
-  }
+  libraryButton.rawProps = {
+    iconName: "yt-sys-icons:library_add",
+    data: libraryButtonData
+  };
   document
     .querySelector("ytmusic-app-layout>ytmusic-player-bar")
     .querySelector("ytmusic-like-button-renderer")
     .insertAdjacentElement("afterend", libraryButton);
 
-  let playlistButton = document.createElement("yt-button-shape");
+  const playlistButton = document.createElement("yt-button-shape");
   playlistButton.classList.add("ytmd-player-bar-control");
   playlistButton.classList.add("playlist-button");
-  let playlistButtonData = {
+  const playlistButtonData = {
     focused: false,
     iconPosition: "icon-only",
     onTap: function () {
-      var closePopupEvent = {
+      const closePopupEvent = {
         bubbles: true,
         cancelable: false,
         composed: true,
@@ -98,8 +95,8 @@
           returnValue: []
         }
       };
-      var returnValue = [];
-      var serviceRequestEvent = {
+      const returnValue = [];
+      const serviceRequestEvent = {
         bubbles: true,
         cancelable: false,
         composed: true,
@@ -121,7 +118,7 @@
       this.dispatchEvent(new CustomEvent("yt-action", serviceRequestEvent));
       returnValue[0].ajaxPromise.then(
         response => {
-          var addToPlaylistEvent = {
+          const addToPlaylistEvent = {
             bubbles: true,
             cancelable: false,
             composed: true,
@@ -155,15 +152,10 @@
     toggled: false,
     type: "text"
   };
-  if (wizButtonShapeEnabled) {
-    playlistButton.rawProps = {
-      iconName: "yt-sys-icons:playlist_add",
-      data: playlistButtonData
-    };
-  } else {
-    playlistButton.set("iconName", "yt-sys-icons:playlist_add");
-    playlistButton.set("data", playlistButtonData);
-  }
+  playlistButton.rawProps = {
+    iconName: "yt-sys-icons:playlist_add",
+    data: playlistButtonData
+  };
   libraryButton.insertAdjacentElement("afterend", playlistButton);
 
   document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.addEventListener("onVideoDataChange", event => {
@@ -172,10 +164,10 @@
     }
   });
 
-  let rightControls = document.querySelector("ytmusic-app-layout>ytmusic-player-bar").querySelector(".right-controls-buttons");
-  let sleepTimerButton = document.createElement("yt-icon-button");
+  const rightControls = document.querySelector("ytmusic-app-layout>ytmusic-player-bar").querySelector(".right-controls-buttons");
+  const sleepTimerButton = document.createElement("yt-icon-button");
 
-  let sleepTimerIcon = document.createElement("yt-icon");
+  const sleepTimerIcon = document.createElement("yt-icon");
   sleepTimerIcon.set("icon", "TIMER");
   sleepTimerButton.appendChild(sleepTimerIcon);
 
@@ -316,24 +308,24 @@
                       },
                       sleepTimerTimeout !== null
                         ? {
-                          menuServiceItemRenderer: {
-                            icon: {
-                              iconType: "DELETE"
-                            },
-                            serviceEndpoint: {
-                              ytmdSleepTimerServiceEndpoint: {
-                                time: 0
-                              }
-                            },
-                            text: {
-                              runs: [
-                                {
-                                  text: "Clear sleep timer"
+                            menuServiceItemRenderer: {
+                              icon: {
+                                iconType: "DELETE"
+                              },
+                              serviceEndpoint: {
+                                ytmdSleepTimerServiceEndpoint: {
+                                  time: 0
                                 }
-                              ]
+                              },
+                              text: {
+                                runs: [
+                                  {
+                                    text: "Clear sleep timer"
+                                  }
+                                ]
+                              }
                             }
                           }
-                        }
                         : {}
                     ]
                   }
@@ -504,7 +496,7 @@
   });
 
   ytmStore.subscribe(() => {
-    let state = ytmStore.getState();
+    const state = ytmStore.getState();
 
     // Update library button for current data
     const currentMenu = document.querySelector("ytmusic-app-layout>ytmusic-player-bar").getMenuRenderer();
@@ -530,49 +522,25 @@
               state.toggleStates.feedbackToggleStates[libraryFeedbackDefaultToken] !== null
             ) {
               libraryButtonData.toggled = state.toggleStates.feedbackToggleStates[libraryFeedbackDefaultToken];
-              if (wizButtonShapeEnabled) {
-                libraryButton.setters.data(libraryButtonData); 
-              } else {
-                libraryButton.set("data.toggled", libraryButtonData.toggled);
-              }
+              libraryButton.setters.data(libraryButtonData);
             } else {
               libraryButtonData.toggled = false;
-              if (wizButtonShapeEnabled) {
-                libraryButton.setters.data(libraryButtonData); 
-              } else {
-                libraryButton.set("data.toggled", libraryButtonData.toggled);
-              }
+              libraryButton.setters.data(libraryButtonData);
             }
 
             if (item.toggleMenuServiceItemRenderer.defaultIcon.iconType === "LIBRARY_SAVED") {
               // Default value is saved to library (false == remove from library, true == add to library)
               if (libraryButtonData.toggled) {
-                if (wizButtonShapeEnabled) {
-                  libraryButton.setters.iconName("yt-sys-icons:library_add");
-                } else {
-                  libraryButton.set("iconName", "yt-sys-icons:library_add");
-                }
+                libraryButton.setters.iconName("yt-sys-icons:library_add");
               } else {
-                if (wizButtonShapeEnabled) {
-                  libraryButton.setters.iconName("yt-sys-icons:library_saved");
-                } else {
-                  libraryButton.set("iconName", "yt-sys-icons:library_saved");
-                } 
+                libraryButton.setters.iconName("yt-sys-icons:library_saved");
               }
             } else if (item.toggleMenuServiceItemRenderer.defaultIcon.iconType === "LIBRARY_ADD") {
               // Default value is add to library (false == add to library, true == remove from library)
               if (libraryButtonData.toggled) {
-                if (wizButtonShapeEnabled) {
-                  libraryButton.setters.iconName("yt-sys-icons:library_saved");
-                } else {
-                  libraryButton.set("iconName", "yt-sys-icons:library_saved");
-                }
+                libraryButton.setters.iconName("yt-sys-icons:library_saved");
               } else {
-                if (wizButtonShapeEnabled) {
-                  libraryButton.setters.iconName("yt-sys-icons:library_add");
-                } else {
-                  libraryButton.set("iconName", "yt-sys-icons:library_add");
-                }
+                libraryButton.setters.iconName("yt-sys-icons:library_add");
               }
             }
             break;
@@ -600,4 +568,228 @@
   });
 
   ytmdControlButtons.libraryButton = libraryButton;
-});
+}
+
+export async function addTimedLyrics() {
+  const ytmStore = polymerhook.ytmStore;
+
+  let currentLyricBrowseId = "";
+  let currentTimedLyrics = null;
+  let autoScrolling = false;
+  let autoScrollPaused = false;
+  let viewingLyricsTab = false;
+  let ytmLyricTabContents = null;
+
+  const timedLyricsContainer = document.createElement("div");
+  timedLyricsContainer.classList.add("ytmd-lyrics");
+  const timedLyricsSource = document.createElement("p");
+  timedLyricsSource.classList.add("ytmd-lyrics-source");
+  const timedLyricsYTMDNote = document.createElement("p");
+  timedLyricsYTMDNote.classList.add("ytmd-lyrics-ytmdnote");
+  timedLyricsYTMDNote.innerText = "Timed lyrics system provided by YTMDesktop";
+
+  const returnToLiveContainer = document.createElement("div");
+  returnToLiveContainer.classList.add("ytmd-lyrics-return-live-container");
+  const returnToLive = document.createElement("yt-button-renderer");
+  returnToLive.classList.add("ytmd-lyrics-return-live");
+  returnToLive.data = {
+    text: {
+      runs: [
+        {
+          text: "Sync to video time"
+        }
+      ]
+    },
+    style: "STYLE_OVERLAY"
+  };
+
+  function enableAutoScroll() {
+    autoScrollPaused = false;
+    returnToLive.hidden = true;
+  }
+
+  function disableAutoScroll() {
+    autoScrollPaused = true;
+    returnToLive.hidden = false;
+  }
+
+  returnToLive.onClick = () => {
+    enableAutoScroll();
+    autoScrolling = true;
+    timedLyricsContainer.querySelector(".active").scrollIntoView({
+      behavior: "instant",
+      block: "center",
+      inline: "center"
+    });
+  };
+  returnToLiveContainer.appendChild(returnToLive);
+
+  const tabRenderer = document.querySelector("#player-page #tab-renderer");
+  tabRenderer.addEventListener("scroll", () => {
+    if (!viewingLyricsTab) return;
+    if (autoScrolling) return;
+
+    disableAutoScroll();
+  });
+  tabRenderer.addEventListener("scrollend", () => {
+    if (!viewingLyricsTab) return;
+    if (autoScrolling) {
+      autoScrolling = false;
+      return;
+    }
+  });
+
+  async function getTimedLyrics() {
+    try {
+      // This is an anonymous request and could be broken by Google at any time
+      const browseRes = await fetch("/youtubei/v1/browse", {
+        method: "POST",
+        body: JSON.stringify({
+          browseId: currentLyricBrowseId,
+          context: {
+            client: {
+              clientName: "ANDROID_MUSIC",
+              clientVersion: "7.12.5"
+            }
+          }
+        })
+      });
+      const json = await browseRes.json();
+
+      // This is likely a timed lyrics response
+      if (json.contents && json.contents.elementRenderer) {
+        const timedLyrics = json.contents.elementRenderer.newElement.type.componentType.model.timedLyricsModel.lyricsData.timedLyricsData;
+        const source = json.contents.elementRenderer.newElement.type.componentType.model.timedLyricsModel.lyricsData.sourceMessage;
+
+        timedLyricsSource.innerText = source;
+
+        const lyricElements = [];
+        for (const lyric of timedLyrics) {
+          const lyricElement = document.createElement("p");
+          lyricElement.innerText = lyric.lyricLine;
+          lyricElement.classList.add("ytmd-lyric-line");
+          lyricElement.setAttribute("data-start-ms", lyric.cueRange.startTimeMilliseconds);
+          lyricElement.setAttribute("data-end-ms", lyric.cueRange.endTimeMilliseconds);
+          lyricElement.onclick = () => {
+            enableAutoScroll();
+            document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.seekTo(parseInt(lyric.cueRange.startTimeMilliseconds) / 1000);
+          };
+          lyricElements.push(lyricElement);
+        }
+        timedLyricsContainer.replaceChildren(...lyricElements);
+
+        currentTimedLyrics = {
+          timedLyrics,
+          source
+        };
+      } else {
+        currentTimedLyrics = null;
+      }
+    } catch {
+      /* empty */
+    }
+  }
+
+  function waitForElement(root, selector) {
+    return new Promise(resolve => {
+      if (root.querySelector(selector)) {
+        return resolve(root.querySelector(selector));
+      }
+
+      const observer = new MutationObserver(() => {
+        if (root.querySelector(selector)) {
+          observer.disconnect();
+          resolve(root.querySelector(selector));
+        }
+      });
+
+      observer.observe(root, {
+        childList: true,
+        subtree: true
+      });
+    });
+  }
+
+  async function updateLyricsTab() {
+    if (currentTimedLyrics) {
+      const tabRenderer = document.querySelector("#player-page #tab-renderer");
+
+      const contents = await waitForElement(tabRenderer, ".ytmusic-tab-renderer[page-type='MUSIC_PAGE_TYPE_TRACK_LYRICS'] > #contents");
+      if (!ytmLyricTabContents) ytmLyricTabContents = Array.from(contents.children);
+      contents.replaceChildren(timedLyricsContainer, timedLyricsSource, timedLyricsYTMDNote, returnToLiveContainer);
+    }
+  }
+
+  // This could definitely be optimized far better
+  function updateLyricLines(progress) {
+    const msProgress = progress * 1000;
+    for (const lyric of timedLyricsContainer.children) {
+      const lyricStart = parseInt(lyric.getAttribute("data-start-ms"));
+      const lyricEnd = parseInt(lyric.getAttribute("data-end-ms"));
+
+      if (msProgress >= lyricStart && msProgress < lyricEnd) {
+        if (!lyric.classList.contains("active")) {
+          lyric.classList.add("active");
+          if (!autoScrollPaused) {
+            autoScrolling = true;
+            lyric.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "center"
+            });
+          }
+        }
+      } else {
+        if (lyric.classList.contains("active")) lyric.classList.remove("active");
+      }
+    }
+  }
+
+  ytmStore.subscribe(async () => {
+    const state = ytmStore.getState();
+    if (state.playerPage && state.playerPage.playerPageTabs) {
+      let lyricsTab = -1;
+      for (let i = 0; i < state.playerPage.playerPageTabs.length; i++) {
+        const tab = state.playerPage.playerPageTabs[i];
+        // Check if this is the Music Page Lyrics tab
+        if (tab.tabRenderer?.endpoint?.browseEndpoint?.browseId.startsWith("MPLY")) {
+          lyricsTab = i;
+          break;
+        }
+      }
+
+      const lyricBrowseId = state.playerPage.playerPageTabs[lyricsTab].tabRenderer.endpoint.browseEndpoint.browseId;
+      if (currentLyricBrowseId !== lyricBrowseId) {
+        currentLyricBrowseId = lyricBrowseId;
+        enableAutoScroll();
+        await getTimedLyrics();
+      }
+
+      if (state.playerPage.playerPageTabSelectedIndex === lyricsTab) {
+        viewingLyricsTab = true;
+        if (state.player.playerResponse.videoDetails.musicVideoType !== "MUSIC_VIDEO_TYPE_OMV") {
+          await updateLyricsTab();
+          enableAutoScroll();
+          autoScrolling = true;
+          timedLyricsContainer.querySelector(".active").scrollIntoView({
+            behavior: "instant",
+            block: "center",
+            inline: "center"
+          });
+        } else {
+          if (currentTimedLyrics) {
+            const contents = await waitForElement(tabRenderer, ".ytmusic-tab-renderer[page-type='MUSIC_PAGE_TYPE_TRACK_LYRICS'] > #contents");
+            contents.replaceChildren(...ytmLyricTabContents);
+          }
+        }
+      } else if (state.playerPage.playerPageTabSelectedIndex !== lyricsTab) {
+        viewingLyricsTab = false;
+        ytmLyricTabContents = null;
+      }
+    }
+  });
+
+  document.querySelector("ytmusic-app-layout>ytmusic-player-bar").playerApi.addEventListener("onVideoProgress", progress => {
+    updateLyricLines(progress);
+  });
+}

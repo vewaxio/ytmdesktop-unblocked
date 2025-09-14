@@ -46,3 +46,10 @@ export type Constructor<T> = new (...args: unknown[]) => T;
 export type DependencyConstructor<T> = Constructor<T> & {
   dependencies: DependencyConstructor<T>[];
 };
+
+export enum ProtectedAPIOpCode {
+  ProvideAPIPort,
+  Message,
+  Invoke,
+  InvokeResponse
+}

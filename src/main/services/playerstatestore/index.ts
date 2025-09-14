@@ -1,6 +1,9 @@
 import { LikeStatus, PlayerQueue, PlayerQueueItem, PlayerState, RepeatMode, VideoDetails, VideoState, VideoType } from "~shared/playerstatestore/types";
-import { EventEmitterService } from "../service";
+import Service, { EventEmitterService } from "../service";
 import log from "electron-log";
+import { DependencyConstructor } from "~shared/types";
+import ProtectedAPIManager, { ProtectedAPI } from "../protectedapimanager";
+import AppWindowManager from "../windowmanager";
 
 enum YTMVideoState {
   Unstarted = -1,
@@ -203,9 +206,13 @@ function transformVideoType(videoType: string) {
 
 export type PlayerStateStoreEventMap = {
   "state-changed": [PlayerState];
+  "playlist-created": [{ title: string; id: string }];
+  "playlist-deleted": [string];
 };
 
 export default class PlayerStateStore extends EventEmitterService<PlayerStateStoreEventMap> {
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [AppWindowManager, ProtectedAPIManager];
+
   private videoProgress = 0;
   private state: VideoState = -1;
   private videoDetails: VideoDetails | null = null;
@@ -216,8 +223,19 @@ export default class PlayerStateStore extends EventEmitterService<PlayerStateSto
   private adPlaying: boolean = false;
   private hasFullMetadata: boolean = false;
 
+  private stateApi: ProtectedAPI;
+
   public override onPreInitialized(): void {}
   public override onInitialized(): void {
+    this.stateApi = this.getDependency(ProtectedAPIManager).createOrGetAPI("PlayerState");
+    this.stateApi.on("updateVideoProgress", this.updateVideoProgress.bind(this));
+    this.stateApi.on("updateVideoState", this.updateVideoState.bind(this));
+    this.stateApi.on("updateVideoDetails", this.updateVideoDetails.bind(this));
+    this.stateApi.on("updateFromStore", this.updateFromStore.bind(this));
+
+    this.stateApi.on("playlistCreated", playlist => this.emit("playlist-created", playlist));
+    this.stateApi.on("playlistDeleted", playlistId => this.emit("playlist-deleted", playlistId));
+
     log.info("PlayerStateStore initialized");
   }
   public override onPostInitialized(): void {}
@@ -247,7 +265,7 @@ export default class PlayerStateStore extends EventEmitterService<PlayerStateSto
 
   public updateVideoProgress(progress: number) {
     this.videoProgress = progress;
-    this.emit("state-changed", this.getState());
+    this.stateChanged();
   }
 
   public updateVideoState(state: YTMVideoState) {
@@ -272,7 +290,8 @@ export default class PlayerStateStore extends EventEmitterService<PlayerStateSto
         break;
       }
     }
-    this.emit("state-changed", this.getState());
+
+    this.stateChanged();
   }
 
   public updateVideoDetails(
@@ -297,7 +316,8 @@ export default class PlayerStateStore extends EventEmitterService<PlayerStateSto
     };
     this.playlistId = playlistId;
     this.hasFullMetadata = hasFullMetadata;
-    this.emit("state-changed", this.getState());
+
+    this.stateChanged();
   }
 
   public updateFromStore(
@@ -332,6 +352,27 @@ export default class PlayerStateStore extends EventEmitterService<PlayerStateSto
     this.adPlaying = adPlaying === true;
     this.muted = muted === true;
     if (typeof volume === "number" && volume >= 0) this.volume = volume;
+
+    this.stateChanged();
+  }
+
+  private stateChanged() {
+    const state = this.getState();
+
+    const windowManager = this.getDependency(AppWindowManager);
+    if (windowManager.hasWindow("Miniplayer")) {
+      windowManager.getWindow("Miniplayer").ipcBroadcast("playerStateStore:stateChanged", state);
+    }
+
+    if (state.hasFullMetadata) {
+      if (windowManager.hasWindow("Main"))
+        windowManager.getWindow("Main").setTitle(`${state.videoDetails.title} - ${state.videoDetails.author} | YouTube Music Desktop App`);
+      if (windowManager.hasWindow("Miniplayer"))
+        windowManager.getWindow("Miniplayer").setTitle(`${state.videoDetails.title} - ${state.videoDetails.author} | YouTube Music Desktop App - Miniplayer`);
+    } else {
+      if (windowManager.hasWindow("Main")) windowManager.getWindow("Main").setTitle(`YouTube Music Desktop App`);
+      if (windowManager.hasWindow("Miniplayer")) windowManager.getWindow("Miniplayer").setTitle("YouTube Music Desktop App - Miniplayer");
+    }
 
     this.emit("state-changed", this.getState());
   }

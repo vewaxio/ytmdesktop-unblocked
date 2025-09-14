@@ -27,6 +27,7 @@ import MemoryStore from "./services/memorystore";
 import { MemoryStoreSchema, TrayIconStyle } from "~shared/store/schema";
 import ProtocolManager from "./services/protocolmanager";
 import PlayerStateStore from "./services/playerstatestore";
+import ProtectedAPIManager from "./services/protectedapimanager";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -44,6 +45,7 @@ serviceCollection.addServices([
   MemoryStore<MemoryStoreSchema>,
   AutoUpdater,
   StateManager,
+  ProtectedAPIManager,
   PlayerStateStore,
   YTMViewManager,
   ShortcutManager,
@@ -413,11 +415,12 @@ app.on("ready", async () => {
     });
 
     miniplayerWindow.ipcOn("remoteControl:execute", (event, command: string, ...args: unknown[]) => {
-      const ytmView = ytmViewManager.getView();
-      if (ytmView) ytmView.webContents.send("remoteControl:execute", command, ...args);
+      const remoteControlApi = serviceHost.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
+      remoteControlApi.postMessage("execute", command, ...args);
     });
 
     miniplayerWindow.ipcHandle("playerStateStore:getState", () => {
+      const playerStateStore = serviceHost.getService(PlayerStateStore);
       return playerStateStore.getState();
     });
 

@@ -3,8 +3,8 @@ import PlayerStateStore from "../../services/playerstatestore";
 import { MediaPlayer, MediaPlayerMediaType, MediaPlayerPlaybackStatus, MediaPlayerThumbnail, MediaPlayerThumbnailType } from "xosms";
 import Integration from "../integration";
 import ConfigStore from "../../services/configstore";
-import YTMViewManager from "../../services/ytmviewmanager";
 import { PlayerState, Thumbnail, VideoState } from "~shared/playerstatestore/types";
+import ProtectedAPIManager from "../../services/protectedapimanager";
 
 function getHighestResThumbnail(thumbnails: Thumbnail[]) {
   let currentWidth = 0;
@@ -40,45 +40,44 @@ export default class EnhancedMediaService extends Integration {
     super();
 
     this.mediaPlayer.on("buttonpressed", (_error: unknown, button: string) => {
-      const ytmView = this.getService(YTMViewManager).getView();
+      const remoteControlApi = this.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
       switch (button) {
         case "playpause":
-          ytmView.webContents.send("remoteControl:execute", "playPause");
+          remoteControlApi.postMessage("execute", "playPause");
           break;
         case "play":
-          ytmView.webContents.send("remoteControl:execute", "play");
+          remoteControlApi.postMessage("execute", "play");
           break;
         case "pause":
-          ytmView.webContents.send("remoteControl:execute", "pause");
+          remoteControlApi.postMessage("execute", "pause");
           break;
         case "stop":
-          ytmView.webContents.send("remoteControl:execute", "pause");
+          remoteControlApi.postMessage("execute", "pause");
           break;
         case "next":
-          ytmView.webContents.send("remoteControl:execute", "next");
+          remoteControlApi.postMessage("execute", "next");
           break;
         case "previous":
-          ytmView.webContents.send("remoteControl:execute", "previous");
+          remoteControlApi.postMessage("execute", "previous");
           break;
       }
     });
     this.mediaPlayer.on("positionchanged", (_error: unknown, position: number) => {
-      const ytmView = this.getService(YTMViewManager).getView();
+      const remoteControlApi = this.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
       const playerStateStore = this.getService(PlayerStateStore);
-      if (position >= 0 && position <= playerStateStore.getState().videoDetails.durationSeconds)
-        ytmView.webContents.send("remoteControl:execute", "seekTo", position);
+      if (position >= 0 && position <= playerStateStore.getState().videoDetails.durationSeconds) remoteControlApi.postMessage("execute", "seekTo", position);
     });
     this.mediaPlayer.on("positionseeked", (_error: unknown, seek: number) => {
-      const ytmView = this.getService(YTMViewManager).getView();
+      const remoteControlApi = this.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
       const playerStateStore = this.getService(PlayerStateStore);
       let newProgress = playerStateStore.getState().videoProgress + seek;
       if (newProgress <= 0) newProgress = 0;
 
       // Behavior aligns with MPRIS documentation
       if (newProgress > playerStateStore.getState().videoDetails.durationSeconds) {
-        ytmView.webContents.send("remoteControl:execute", "next");
+        remoteControlApi.postMessage("execute", "next");
       } else {
-        ytmView.webContents.send("remoteControl:execute", "seekTo", newProgress);
+        remoteControlApi.postMessage("execute", "seekTo", newProgress);
       }
     });
 

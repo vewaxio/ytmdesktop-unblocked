@@ -24,18 +24,17 @@ import {
   InvalidVolumeError,
   UnauthenticatedError,
   YouTubeMusicTimeOutError,
-  YouTubeMusicUnavailableError,
   InvalidQueueAddRequestError
 } from "../../api-shared/errors";
 import path from "node:path";
 import Service from "../../../../services/service";
 import { Constructor } from "~shared/types";
-import YTMViewManager from "../../../../services/ytmviewmanager";
 import MemoryStore from "../../../../services/memorystore";
 import { MemoryStoreSchema } from "~shared/store/schema";
 import ConfigStore from "../../../../services/configstore";
 import { PlayerState, RepeatMode } from "~shared/playerstatestore/types";
 import PlayerStateStore from "../../../../services/playerstatestore";
+import ProtectedAPIManager from "../../../../services/protectedapimanager";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -102,194 +101,193 @@ const authorizationWindows: BrowserWindow[] = [];
 
 const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> = async (fastify, options) => {
   const sendCommand = (commandRequest: APIV1CommandRequestBodyType) => {
-    const ytmViewManager = options.getService(YTMViewManager);
     const playerStateStore = options.getService(PlayerStateStore);
-    const ytmView = ytmViewManager.getView();
-    if (ytmView) {
-      switch (commandRequest.command) {
-        case "playPause": {
-          ytmView.webContents.send("remoteControl:execute", "playPause");
-          break;
+    const protectedApiManager = options.getService(ProtectedAPIManager);
+    const remoteControlApi = protectedApiManager.createOrGetAPI("RemoteControl");
+
+    switch (commandRequest.command) {
+      case "playPause": {
+        remoteControlApi.postMessage("execute", "playPause");
+        break;
+      }
+
+      case "play": {
+        remoteControlApi.postMessage("execute", "play");
+        break;
+      }
+
+      case "pause": {
+        remoteControlApi.postMessage("execute", "pause");
+        break;
+      }
+
+      case "volumeUp": {
+        remoteControlApi.postMessage("execute", "volumeUp");
+        break;
+      }
+
+      case "volumeDown": {
+        remoteControlApi.postMessage("execute", "volumeDown");
+        break;
+      }
+
+      case "setVolume": {
+        const volume = commandRequest.data;
+        // Check if Volume is a number and between 0 and 100
+        if (isNaN(volume) || volume < 0 || volume > 100) {
+          throw new InvalidVolumeError(volume);
         }
 
-        case "play": {
-          ytmView.webContents.send("remoteControl:execute", "play");
-          break;
+        remoteControlApi.postMessage("execute", "setVolume", volume);
+        break;
+      }
+
+      case "mute": {
+        remoteControlApi.postMessage("execute", "mute");
+        break;
+      }
+
+      case "unmute": {
+        remoteControlApi.postMessage("execute", "unmute");
+        break;
+      }
+
+      case "seekTo": {
+        const position = commandRequest.data;
+        if (isNaN(position) || position < 0 || position > playerStateStore.getState().videoDetails.durationSeconds) {
+          throw new InvalidPositionError(position);
         }
+        remoteControlApi.postMessage("execute", "seekTo", position);
+        break;
+      }
 
-        case "pause": {
-          ytmView.webContents.send("remoteControl:execute", "pause");
-          break;
+      case "changeVideo": {
+        const videoId = commandRequest.data.videoId;
+        const playlistId = commandRequest.data.playlistId;
+        if (videoId == null && playlistId == null) {
+          throw new InvalidChangeVideoRequestError();
         }
-
-        case "volumeUp": {
-          ytmView.webContents.send("remoteControl:execute", "volumeUp");
-          break;
-        }
-
-        case "volumeDown": {
-          ytmView.webContents.send("remoteControl:execute", "volumeDown");
-          break;
-        }
-
-        case "setVolume": {
-          const volume = commandRequest.data;
-          // Check if Volume is a number and between 0 and 100
-          if (isNaN(volume) || volume < 0 || volume > 100) {
-            throw new InvalidVolumeError(volume);
-          }
-
-          ytmView.webContents.send("remoteControl:execute", "setVolume", volume);
-          break;
-        }
-
-        case "mute": {
-          ytmView.webContents.send("remoteControl:execute", "mute");
-          break;
-        }
-
-        case "unmute": {
-          ytmView.webContents.send("remoteControl:execute", "unmute");
-          break;
-        }
-
-        case "seekTo": {
-          const position = commandRequest.data;
-          if (isNaN(position) || position < 0 || position > playerStateStore.getState().videoDetails.durationSeconds) {
-            throw new InvalidPositionError(position);
-          }
-          ytmView.webContents.send("remoteControl:execute", "seekTo", position);
-          break;
-        }
-
-        case "changeVideo": {
-          const videoId = commandRequest.data.videoId;
-          const playlistId = commandRequest.data.playlistId;
-          if (videoId == null && playlistId == null) {
-            throw new InvalidChangeVideoRequestError();
-          }
-          ytmView.webContents.send("remoteControl:execute", "navigate", {
-            watchEndpoint: {
-              videoId: videoId,
-              playlistId: playlistId
-            }
-          });
-          break;
-        }
-
-        case "next": {
-          ytmView.webContents.send("remoteControl:execute", "next");
-          break;
-        }
-
-        case "previous": {
-          ytmView.webContents.send("remoteControl:execute", "previous");
-          break;
-        }
-
-        case "repeatMode": {
-          const repeatMode = commandRequest.data;
-          switch (repeatMode) {
-            case RepeatMode.None: {
-              ytmView.webContents.send("remoteControl:execute", "repeatMode", "NONE");
-              break;
-            }
-            case RepeatMode.All: {
-              ytmView.webContents.send("remoteControl:execute", "repeatMode", "ALL");
-              break;
-            }
-            case RepeatMode.One: {
-              ytmView.webContents.send("remoteControl:execute", "repeatMode", "ONE");
-              break;
-            }
-            default: {
-              throw new InvalidRepeatModeError(repeatMode);
-            }
-          }
-          break;
-        }
-
-        case "shuffle": {
-          ytmView.webContents.send("remoteControl:execute", "shuffle");
-          break;
-        }
-
-        case "playQueueIndex": {
-          const index = commandRequest.data;
-          const state = playerStateStore.getState();
-
-          if (isNaN(index) || index > state.queue.items.length + state.queue.automixItems.length - 1) {
-            throw new InvalidQueueIndexError(index);
-          }
-
-          ytmView.webContents.send("remoteControl:execute", "playQueueIndex", index);
-          break;
-        }
-
-        case "toggleLike": {
-          ytmView.webContents.send("remoteControl:execute", "toggleLike");
-          break;
-        }
-
-        case "toggleDislike": {
-          ytmView.webContents.send("remoteControl:execute", "toggleDislike");
-          break;
-        }
-
-        case "queueAdd": {
-          const videoId = commandRequest.data.videoId;
-          const playlistId = commandRequest.data.playlistId;
-          if (videoId == null && playlistId == null) {
-            throw new InvalidQueueAddRequestError();
-          } else if (videoId != null && playlistId != null) {
-            throw new InvalidQueueAddRequestError();
-          }
-
-          const index = commandRequest.data.index;
-          const state = playerStateStore.getState();
-          if (isNaN(index) || index > state.queue.items.length) {
-            throw new InvalidQueueIndexError(index);
-          }
-
-          ytmView.webContents.send("remoteControl:execute", "queueAdd", {
+        remoteControlApi.postMessage("execute", "navigate", {
+          watchEndpoint: {
             videoId: videoId,
-            playlistId: playlistId,
-            index
-          });
-          break;
+            playlistId: playlistId
+          }
+        });
+        break;
+      }
+
+      case "next": {
+        remoteControlApi.postMessage("execute", "next");
+        break;
+      }
+
+      case "previous": {
+        remoteControlApi.postMessage("execute", "previous");
+        break;
+      }
+
+      case "repeatMode": {
+        const repeatMode = commandRequest.data;
+        switch (repeatMode) {
+          case RepeatMode.None: {
+            remoteControlApi.postMessage("execute", "repeatMode", "NONE");
+            break;
+          }
+          case RepeatMode.All: {
+            remoteControlApi.postMessage("execute", "repeatMode", "ALL");
+            break;
+          }
+          case RepeatMode.One: {
+            remoteControlApi.postMessage("execute", "repeatMode", "ONE");
+            break;
+          }
+          default: {
+            throw new InvalidRepeatModeError(repeatMode);
+          }
+        }
+        break;
+      }
+
+      case "shuffle": {
+        remoteControlApi.postMessage("execute", "shuffle");
+        break;
+      }
+
+      case "playQueueIndex": {
+        const index = commandRequest.data;
+        const state = playerStateStore.getState();
+
+        if (isNaN(index) || index > state.queue.items.length + state.queue.automixItems.length - 1) {
+          throw new InvalidQueueIndexError(index);
         }
 
-        case "queueRemove": {
-          const index = commandRequest.data;
-          const state = playerStateStore.getState();
+        remoteControlApi.postMessage("execute", "playQueueIndex", index);
+        break;
+      }
 
-          if (isNaN(index) || index > state.queue.items.length - 1) {
-            throw new InvalidQueueIndexError(index);
-          }
+      case "toggleLike": {
+        remoteControlApi.postMessage("execute", "toggleLike");
+        break;
+      }
 
-          ytmView.webContents.send("remoteControl:execute", "queueRemove", index);
-          break;
+      case "toggleDislike": {
+        remoteControlApi.postMessage("execute", "toggleDislike");
+        break;
+      }
+
+      case "queueAdd": {
+        const videoId = commandRequest.data.videoId;
+        const playlistId = commandRequest.data.playlistId;
+        if (videoId == null && playlistId == null) {
+          throw new InvalidQueueAddRequestError();
+        } else if (videoId != null && playlistId != null) {
+          throw new InvalidQueueAddRequestError();
         }
 
-        case "queueMove": {
-          const fromIndex = commandRequest.data.fromIndex;
-          const toIndex = commandRequest.data.toIndex;
-          const state = playerStateStore.getState();
-
-          if (isNaN(fromIndex) || fromIndex > state.queue.items.length - 1) {
-            throw new InvalidQueueIndexError(fromIndex);
-          }
-
-          if (isNaN(toIndex) || toIndex > state.queue.items.length - 1) {
-            throw new InvalidQueueIndexError(toIndex);
-          }
-
-          ytmView.webContents.send("remoteControl:execute", "queueMove", {
-            fromIndex,
-            toIndex
-          });
-          break;
+        const index = commandRequest.data.index;
+        const state = playerStateStore.getState();
+        if (isNaN(index) || index > state.queue.items.length) {
+          throw new InvalidQueueIndexError(index);
         }
+
+        remoteControlApi.postMessage("execute", "queueAdd", {
+          videoId: videoId,
+          playlistId: playlistId,
+          index
+        });
+        break;
+      }
+
+      case "queueRemove": {
+        const index = commandRequest.data;
+        const state = playerStateStore.getState();
+
+        if (isNaN(index) || index > state.queue.items.length - 1) {
+          throw new InvalidQueueIndexError(index);
+        }
+
+        remoteControlApi.postMessage("execute", "queueRemove", index);
+        break;
+      }
+
+      case "queueMove": {
+        const fromIndex = commandRequest.data.fromIndex;
+        const toIndex = commandRequest.data.toIndex;
+        const state = playerStateStore.getState();
+
+        if (isNaN(fromIndex) || fromIndex > state.queue.items.length - 1) {
+          throw new InvalidQueueIndexError(fromIndex);
+        }
+
+        if (isNaN(toIndex) || toIndex > state.queue.items.length - 1) {
+          throw new InvalidQueueIndexError(toIndex);
+        }
+
+        remoteControlApi.postMessage("execute", "queueMove", {
+          fromIndex,
+          toIndex
+        });
+        break;
       }
     }
   };
@@ -504,27 +502,12 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
       }
     },
     async (request, response) => {
-      const ytmViewManager = options.getService(YTMViewManager);
-      const ytmView = ytmViewManager.getView();
-      if (ytmView) {
-        const requestId = crypto.randomUUID();
-
-        const playlistsResponseListener = (event: Electron.IpcMainEvent, playlists: Playlist[]) => {
-          if (event.sender !== ytmView.webContents) return;
-          response.send(playlists);
-        };
-        ipcMain.once(`ytmView:getPlaylists:response:${requestId}`, playlistsResponseListener);
-
-        ytmView.webContents.send(`ytmView:getPlaylists`, requestId);
-
-        await new Promise((_resolve, reject) =>
-          setTimeout(() => {
-            ipcMain.removeListener(`ytmView:getPlaylists:response:${requestId}`, playlistsResponseListener);
-            reject(new YouTubeMusicTimeOutError());
-          }, 1000 * 30)
-        );
-      } else {
-        throw new YouTubeMusicUnavailableError();
+      const remoteControlApi = options.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
+      try {
+        const getPlaylistsRes = await remoteControlApi.invokeMessage("getPlaylists");
+        response.send(getPlaylistsRes[0]);
+      } catch {
+        throw new YouTubeMusicTimeOutError();
       }
     }
   );
@@ -604,30 +587,22 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
     };
     playerStateStore.on("state-changed", stateStoreListener);
 
-    const createPlaylistObservedListener = (event: Electron.IpcMainEvent, playlist: Playlist) => {
-      const ytmViewManager = options.getService(YTMViewManager);
-      const ytmView = ytmViewManager.getView();
-      if (event.sender !== ytmView.webContents) return;
-
+    const createPlaylistObservedListener = (playlist: Playlist) => {
       fastify.io.of("/api/v1/realtime").emit("playlist-created", playlist);
     };
-    ipcMain.on("ytmView:createPlaylistObserved", createPlaylistObservedListener);
+    playerStateStore.on("playlist-created", createPlaylistObservedListener);
 
-    const deletePlaylistObservedListener = (event: Electron.IpcMainEvent, playlistId: string) => {
-      const ytmViewManager = options.getService(YTMViewManager);
-      const ytmView = ytmViewManager.getView();
-      if (event.sender !== ytmView.webContents) return;
-
+    const deletePlaylistObservedListener = (playlistId: string) => {
       fastify.io.of("/api/v1/realtime").emit("playlist-deleted", playlistId);
     };
-    ipcMain.on("ytmView:deletePlaylistObserved", deletePlaylistObservedListener);
+    playerStateStore.on("playlist-deleted", deletePlaylistObservedListener);
 
     fastify.addHook("onClose", () => {
       // This should normally close on its own but we'll make sure it's closed out
       fastify.io.close();
       playerStateStore.off("state-changed", stateStoreListener);
-      ipcMain.off("ytmView:createPlaylistObserved", createPlaylistObservedListener);
-      ipcMain.off("ytmView:deletePlaylistObserved", deletePlaylistObservedListener);
+      playerStateStore.off("playlist-created", createPlaylistObservedListener);
+      playerStateStore.off("playlist-deleted", deletePlaylistObservedListener);
     });
   });
 };

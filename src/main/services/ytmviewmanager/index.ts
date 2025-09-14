@@ -9,7 +9,6 @@ import StateManager from "../statemanager";
 import MemoryStore from "../memorystore";
 import { MemoryStoreSchema } from "~shared/store/schema";
 import AppWindowManager from "../windowmanager";
-import PlayerStateStore from "../playerstatestore";
 
 export type YTMViewManagerEventMap = {
   "status-changed": [];
@@ -56,8 +55,7 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     ConfigStore,
     StateManager,
     MemoryStore<MemoryStoreSchema>,
-    AppWindowManager,
-    PlayerStateStore
+    AppWindowManager
   ];
 
   private ytmView: AppView;
@@ -124,7 +122,6 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     const configStore = this.getDependency(ConfigStore);
     const stateManager = this.getDependency(StateManager);
     const memoryStore = this.getDependency(MemoryStore<MemoryStoreSchema>);
-    const windowManager = this.getDependency(AppWindowManager);
 
     this.setStatus(YTMViewStatus.Loading);
 
@@ -207,14 +204,12 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
       stateManager.updateState({
         lastUrl: url
       });
-      this.sendNavigationHistory();
     });
     this.ytmView.on("webcontents-did-navigate-in-page", () => {
       const url = this.ytmView.webContents.getURL();
       stateManager.updateState({
         lastUrl: url
       });
-      this.sendNavigationHistory();
     });
     this.ytmView.on("webcontents-context-menu", (_event, params) => {
       const menu: (Electron.MenuItemConstructorOptions | Electron.MenuItem)[] = [];
@@ -374,63 +369,13 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     this.setWindowOpenHandler();
 
     // YTM View IPC
-    this.ytmView.ipcOn("ytmView:ready", async (event, setupCompletionFlags) => {
+    this.ytmView.ipcOn("ytmView:ready", async (_event, setupCompletionFlags) => {
       this.hooksReady = true;
       this.setupCompletionFlags = setupCompletionFlags;
       this.setStatus(YTMViewStatus.Ready);
     });
     this.ytmView.ipcOn("ytmView:errored", (_event, error) => {
       this.hookError = error;
-    });
-
-    // YTM API IPC
-    const playerStateStore = this.getDependency(PlayerStateStore);
-
-    this.ytmView.ipcOn("ytmApi:videoProgressChanged", (_event, progress) => {
-      playerStateStore.updateVideoProgress(progress);
-
-      if (windowManager.hasWindow("Miniplayer")) {
-        windowManager.getWindow("Miniplayer").ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
-      }
-    });
-    this.ytmView.ipcOn("ytmApi:videoStateChanged", (_event, state) => {
-      playerStateStore.updateVideoState(state);
-
-      if (windowManager.hasWindow("Miniplayer")) {
-        windowManager.getWindow("Miniplayer").ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
-      }
-    });
-    this.ytmView.ipcOn("ytmApi:videoDataChanged", (_event, videoDetails, playlistId, album, likeStatus, hasFullMetadata) => {
-      stateManager.updateState({
-        lastVideoId: videoDetails.videoId,
-        lastPlaylistId: playlistId
-      });
-      playerStateStore.updateVideoDetails(videoDetails, playlistId, album, likeStatus, hasFullMetadata);
-
-      if (windowManager.hasWindow("Miniplayer")) {
-        const miniplayerWindow = windowManager.getWindow("Miniplayer");
-        miniplayerWindow.ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
-
-        if (hasFullMetadata) {
-          miniplayerWindow.setTitle(`${videoDetails.title} - ${videoDetails.author} | YouTube Music Desktop App - Miniplayer`);
-        } else {
-          miniplayerWindow.setTitle("YouTube Music Desktop App - Miniplayer");
-        }
-      }
-
-      const mainWindow = windowManager.getWindow("Main");
-      if (mainWindow && hasFullMetadata) {
-        mainWindow.setTitle(`${videoDetails.title} - ${videoDetails.author} | YouTube Music Desktop App`);
-      } else {
-        mainWindow.setTitle("YouTube Music Desktop App");
-      }
-    });
-    this.ytmView.ipcOn("ytmApi:storeStateChanged", (_event, queue, likeStatus, volume, muted, adPlaying) => {
-      playerStateStore.updateFromStore(queue, likeStatus, volume, muted, adPlaying);
-
-      if (windowManager.hasWindow("Miniplayer")) {
-        windowManager.getWindow("Miniplayer").ipcBroadcast("playerStateStore:stateChanged", playerStateStore.getState());
-      }
     });
   }
 
@@ -466,13 +411,6 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
   private setStatus(status: YTMViewStatus) {
     this._status = status;
     this.emit("status-changed");
-  }
-
-  private sendNavigationHistory() {
-    this.ytmView.webContents.send("ytmView:navigationStateChanged", {
-      canGoBack: this.ytmView.webContents.navigationHistory.canGoBack(),
-      canGoForward: this.ytmView.webContents.navigationHistory.canGoForward()
-    });
   }
 
   private setWindowOpenHandler() {
