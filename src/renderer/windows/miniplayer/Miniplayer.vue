@@ -134,6 +134,7 @@ window.addEventListener("resize", reconcileMarquee);
       >
     </div>
     <div class="video-data">
+      <div class="backdrop" />
       <div
         ref="infoContainer"
         class="video-info"
@@ -232,9 +233,13 @@ window.addEventListener("resize", reconcileMarquee);
 }
 
 .thumbnail {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -999;
 }
 
 .video-data {
@@ -242,6 +247,18 @@ window.addEventListener("resize", reconcileMarquee);
   height: 80px;
   flex-direction: column;
   -webkit-app-region: no-drag;
+  position: relative;
+}
+
+.video-data .backdrop {
+  position: absolute;
+  width: 100%;
+  height: 200%;
+  top: -100%;
+  backdrop-filter: blur(10px);
+  mask-image: linear-gradient(to top, black 0%, black 25%, transparent 100%);
+  z-index: -888;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .video-controls {
@@ -279,12 +296,6 @@ window.addEventListener("resize", reconcileMarquee);
   justify-content: center;
 }
 
-.video-info .details {
-  display: flex;
-  justify-content: center;
-  color: #bbbbbb;
-}
-
 .marquee {
   display: inline-flex;
   animation: marquee 16s linear infinite;
@@ -306,14 +317,14 @@ window.addEventListener("resize", reconcileMarquee);
 
 .seekbar .progress {
   height: 100%;
-  background-color: #f00;
+  background-color: #ff0000;
   pointer-events: none;
 }
 
 .seekbar .handle {
   width: 16px;
   height: 16px;
-  background-color: #f00;
+  background-color: #ff0000;
   border-radius: 50%;
   position: absolute;
   top: 50%;

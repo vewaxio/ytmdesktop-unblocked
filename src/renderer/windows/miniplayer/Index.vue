@@ -19,27 +19,29 @@ function pinUnpinMiniplayer() {
 
 <template>
   <div class="topbar">
-    <button
-      class="pin"
-      title="Pin/Unpin Miniplayer"
-      @click="pinUnpinMiniplayer"
-    >
-      <span
-        v-if="alwaysOnTop"
-        class="icon material-symbols-outlined"
-      >keep</span>
-      <span
-        v-if="!alwaysOnTop"
-        class="icon material-symbols-outlined"
-      >keep_off</span>
-    </button>
-    <button
-      class="pip-exit"
-      title="Close Miniplayer"
-      @click="closeMiniplayer"
-    >
-      <span class="icon material-symbols-outlined">pip_exit</span>
-    </button>
+    <div class="button-container">
+      <button
+        class="pin"
+        title="Pin/Unpin Miniplayer"
+        @click="pinUnpinMiniplayer"
+      >
+        <span
+          v-if="alwaysOnTop"
+          class="icon material-symbols-outlined"
+        >keep</span>
+        <span
+          v-if="!alwaysOnTop"
+          class="icon material-symbols-outlined"
+        >keep_off</span>
+      </button>
+      <button
+        class="pip-exit"
+        title="Close Miniplayer"
+        @click="closeMiniplayer"
+      >
+        <span class="icon material-symbols-outlined">pip_exit</span>
+      </button>
+    </div>
   </div>
   <Suspense>
     <Miniplayer />
@@ -54,8 +56,13 @@ function pinUnpinMiniplayer() {
   justify-content: right;
 }
 
+.topbar .button-container {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
 .topbar button {
-  background-color: transparent;
+  background: transparent;
   border: none;
   cursor: pointer;
   width: 36px;
