@@ -236,6 +236,12 @@ app.on("ready", async () => {
       }
     }
   });
+  mainView.ipcOn("ytmView:reload", () => {
+    const ytmView = ytmViewManager.getView();
+    if (ytmView) {
+      ytmView.webContents.reload();
+    }
+  });
 
   const mainWindow = windowManager.createWindow("Browser", {
     name: "Main",
@@ -577,6 +583,9 @@ app.on("ready", async () => {
   });
   ytmViewManager.on("responsive", async () => {
     await mainView.hide(true);
+  });
+  ytmViewManager.on("load-errored", () => {
+    mainView.webContents.send("ytmView:loadError", ytmViewManager.loadError);
   });
 
   // Initially create the YTM view and attach it

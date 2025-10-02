@@ -16,6 +16,7 @@ export type YTMViewManagerEventMap = {
   "unresponsive": [];
   "responsive": [];
   "title-updated": [string];
+  "load-errored": [];
 };
 
 function urlIsGoogleAccountsDomain(url: URL): boolean {
@@ -71,6 +72,11 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
   private _status = YTMViewStatus.Loading;
   public get status() {
     return this._status;
+  }
+
+  private _loadError: { code: number; description: string } | null = null;
+  public get loadError() {
+    return this._loadError;
   }
 
   public override onPreInitialized() {}
@@ -379,6 +385,10 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
         event.preventDefault();
       }
     });
+    this.ytmView.on("webcontents-did-fail-load", (event, errorCode, errorDescription) => {
+      this.setLoadError(errorCode, errorDescription);
+      this.setStatus(YTMViewStatus.LoadFailed);
+    });
     this.setWindowOpenHandler();
 
     // YTM View IPC
@@ -424,6 +434,14 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
   private setStatus(status: YTMViewStatus) {
     this._status = status;
     this.emit("status-changed");
+  }
+
+  private setLoadError(code: number, description: string) {
+    this._loadError = {
+      code,
+      description
+    };
+    this.emit("load-errored");
   }
 
   private setWindowOpenHandler() {

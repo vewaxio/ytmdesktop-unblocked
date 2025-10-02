@@ -21,6 +21,7 @@ export type AppViewEventMap = {
   "webcontents-responsive": [];
   "webcontents-page-title-updated": [Electron.Event, string, boolean];
   "webcontents-will-prevent-unload": [Electron.Event];
+  "webcontents-did-fail-load": [Electron.Event, number, string, string, boolean, number, number];
 };
 
 export type AppViewOptions = {
@@ -321,6 +322,9 @@ export class AppView extends EventEmitter<AppViewEventMap> {
     });
     this.electronView.webContents.on("will-prevent-unload", event => {
       this.emit("webcontents-will-prevent-unload", event);
+    });
+    this.electronView.webContents.on("did-fail-load", (event, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingID) => {
+      this.emit("webcontents-did-fail-load", event, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingID);
     });
     //#endregion
   }

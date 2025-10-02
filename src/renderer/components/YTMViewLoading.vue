@@ -19,6 +19,7 @@ const ytmViewLoadingStatusMessage = computed(() => {
   }
 });
 const ytmViewLoadTimedOut = ref(false);
+const ytmViewLoadError = ref(null);
 
 let ytmViewTimeout = setTimeout(() => {
   ytmViewLoadTimedOut.value = true;
@@ -26,6 +27,7 @@ let ytmViewTimeout = setTimeout(() => {
 
 window.ytmd.ytmViewStatusChanged((status: YTMViewStatus) => {
   if (status !== YTMViewStatus.Ready) {
+    ytmViewLoadTimedOut.value = false;
     clearTimeout(ytmViewTimeout);
     ytmViewTimeout = setTimeout(() => {
       ytmViewLoadTimedOut.value = true;
@@ -33,6 +35,9 @@ window.ytmd.ytmViewStatusChanged((status: YTMViewStatus) => {
   }
 
   ytmViewLoadingStatus.value = status;
+});
+window.ytmd.ytmViewLoadError(loadError => {
+  ytmViewLoadError.value = loadError;
 });
 window.ytmd.memoryStore.onStateChanged(newState => {
   unresponsive.value = newState.ytmViewUnresponsive ?? false;
@@ -47,6 +52,10 @@ window.ytmd.appViewShowing(() => {
 
 function onHide() {
   window.ytmd.appViewHide();
+}
+
+function refreshYtm() {
+  window.ytmd.ytmViewReload();
 }
 </script>
 
@@ -81,11 +90,28 @@ function onHide() {
             <div class="loader-line" />
             <div class="loader-line" />
           </div>
-          <p class="ytmview-loading-status">
+          <p
+            v-if="!ytmViewLoadError"
+            class="ytmview-loading-status"
+          >
             {{ ytmViewLoadingStatusMessage }}
           </p>
           <div
-            v-if="ytmViewLoadTimedOut"
+            v-else
+            class="load-error-container"
+          >
+            <p class="ytmview-loading-status error">
+              Failed to load YouTube Music: {{ ytmViewLoadError.description }} ({{ ytmViewLoadError.code }})
+            </p>
+            <button
+              class="refresh-ytm-button"
+              @click="refreshYtm"
+            >
+              Refresh YouTube Music
+            </button>
+          </div>
+          <div
+            v-if="ytmViewLoadTimedOut && !ytmViewLoadError"
             class="ytmview-loading-timeout"
           >
             <span>YouTube Music is taking longer than usual to load</span>
@@ -133,15 +159,28 @@ function onHide() {
   color: #969696;
 }
 
+.load-error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .ytmview-loading-status.error {
   color: #f44336;
 }
 
-.ytmview-loading-timeout {
-  color: #f44336;
+.refresh-ytm-button {
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  background-color: #212121;
+  cursor: pointer;
+  border: none;
 }
 
 .ytmview-loading-timeout {
+  color: #f44336;
   display: flex;
   flex-direction: column;
   justify-content: center;

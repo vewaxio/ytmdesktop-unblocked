@@ -34,6 +34,8 @@ declare global {
       ytmViewNavigateDefault(): void;
       ytmViewRecreate(): void;
       ytmViewStatusChanged(callback: (status: YTMViewStatus) => void): void;
+      ytmViewLoadError(callback: (loadError: { code: number; description: string }) => void): void;
+      ytmViewReload(): void;
 
       // View specific
       appViewHiding(callback: () => void): void;

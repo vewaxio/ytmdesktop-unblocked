@@ -18,6 +18,13 @@ contextBridge.exposeInMainWorld("ytmd", {
     ipcRenderer.on("ytmView:statusChanged", (event: Electron.IpcRendererEvent, status: YTMViewStatus) => {
       callback(status);
     }),
+  ytmViewLoadError: (callback: (loadError: { code: number; description: string }) => void) =>
+    ipcRenderer.on("ytmView:loadError", (event: Electron.IpcRendererEvent, loadError: { code: number; description: string }) => {
+      callback(loadError);
+    }),
+  ytmViewReload: () => {
+    ipcRenderer.send("ytmView:reload");
+  },
   appViewHiding: (callback: () => void) =>
     ipcRenderer.on("appView:hide", () => {
       callback();

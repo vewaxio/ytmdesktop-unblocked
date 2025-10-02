@@ -8,7 +8,8 @@ export type WindowsEventArguments = {
 export enum YTMViewStatus {
   Loading,
   Hooking,
-  Ready
+  Ready,
+  LoadFailed
 }
 
 export enum YTMViewSetupCompletionFlags {
