@@ -19,6 +19,7 @@ function pinUnpinMiniplayer() {
 
 <template>
   <div class="topbar">
+    <div class="backdrop" />
     <div class="button-container">
       <button
         class="pin"
@@ -54,11 +55,18 @@ function pinUnpinMiniplayer() {
   -webkit-app-region: drag;
   display: flex;
   justify-content: right;
+  position: relative;
 }
 
-.topbar .button-container {
-  background-color: rgba(0, 0, 0, 0.5);
+.topbar .backdrop {
+  position: absolute;
+  width: 100%;
+  height: 200%;
+  top: -100%;
   backdrop-filter: blur(10px);
+  mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 100%);
+  z-index: -888;
+  background-color: rgba(0, 0, 0, 0.75);
 }
 
 .topbar button {

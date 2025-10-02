@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, useTemplateRef } from "vue";
-import { PlayerState, Thumbnail, VideoState } from "~shared/playerstatestore/types";
+import { PlayerState, RepeatMode, Thumbnail, VideoState } from "~shared/playerstatestore/types";
 
 const state = ref<PlayerState | null>(null);
 state.value = await window.ytmd.playerStore.getState();
@@ -116,6 +116,9 @@ function playPauseVideo() {
 function nextVideo() {
   window.ytmd.executeCommandInYTMView("next");
 }
+function cycleRepeat() {
+  window.ytmd.executeCommandInYTMView("cycleRepeatMode");
+}
 
 window.addEventListener("resize", reconcileMarquee);
 </script>
@@ -198,6 +201,23 @@ window.addEventListener("resize", reconcileMarquee);
             @click="nextVideo"
           >
             <span class="icon material-symbols-outlined">skip_next</span>
+          </button>
+          <button
+            class="repeat"
+            @click="cycleRepeat"
+          >
+            <span
+              v-if="state.queue.repeatMode === RepeatMode.None || state.queue.repeatMode === RepeatMode.Unknown"
+              class="icon material-symbols-outlined"
+            >repeat</span>
+            <span
+              v-if="state.queue.repeatMode === RepeatMode.All"
+              class="icon material-symbols-outlined"
+            >repeat_on</span>
+            <span
+              v-if="state.queue.repeatMode === RepeatMode.One"
+              class="icon material-symbols-outlined"
+            >repeat_one_on</span>
           </button>
         </div>
       </div>
@@ -328,7 +348,7 @@ window.addEventListener("resize", reconcileMarquee);
   border-radius: 50%;
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-8px, -50%);
 }
 
 @keyframes marquee {
