@@ -207,15 +207,21 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     });
     this.ytmView.on("webcontents-did-navigate", () => {
       const url = this.ytmView.webContents.getURL();
-      stateManager.updateState({
-        lastUrl: url
-      });
+      const urlObj = new URL(url);
+      if (urlObj.hostname === "music.youtube.com") {
+        stateManager.updateState({
+          lastUrl: url
+        });
+      }
     });
     this.ytmView.on("webcontents-did-navigate-in-page", () => {
       const url = this.ytmView.webContents.getURL();
-      stateManager.updateState({
-        lastUrl: url
-      });
+      const urlObj = new URL(url);
+      if (urlObj.hostname === "music.youtube.com") {
+        stateManager.updateState({
+          lastUrl: url
+        });
+      }
     });
     this.ytmView.on("webcontents-context-menu", (_event, params) => {
       const menu: (Electron.MenuItemConstructorOptions | Electron.MenuItem)[] = [];
