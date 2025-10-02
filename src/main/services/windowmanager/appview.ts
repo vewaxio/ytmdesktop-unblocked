@@ -20,6 +20,7 @@ export type AppViewEventMap = {
   "webcontents-unresponsive": [];
   "webcontents-responsive": [];
   "webcontents-page-title-updated": [Electron.Event, string, boolean];
+  "webcontents-will-prevent-unload": [Electron.Event];
 };
 
 export type AppViewOptions = {
@@ -223,6 +224,13 @@ export class AppView extends EventEmitter<AppViewEventMap> {
     this.electronView.setVisible(true);
   }
 
+  /**
+   * Gets the parent AppWindow
+   */
+  public getParentWindow() {
+    return this.parentWindow;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- This is OK to have as any
   public ipcOn(channel: string, listener: (event: IpcMainEvent, ...args: any[]) => void) {
     this.ipcEventProxy.on(channel, listener);
@@ -310,6 +318,9 @@ export class AppView extends EventEmitter<AppViewEventMap> {
     });
     this.electronView.webContents.on("page-title-updated", (event, title, explicitSet) => {
       this.emit("webcontents-page-title-updated", event, title, explicitSet);
+    });
+    this.electronView.webContents.on("will-prevent-unload", event => {
+      this.emit("webcontents-will-prevent-unload", event);
     });
     //#endregion
   }

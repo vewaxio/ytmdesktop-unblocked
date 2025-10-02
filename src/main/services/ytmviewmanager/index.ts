@@ -1,4 +1,4 @@
-import { app, Menu, session, shell } from "electron";
+import { app, dialog, Menu, session, shell } from "electron";
 import { DependencyConstructor, YTMViewSetupCompletionFlags, YTMViewStatus } from "~shared/types";
 import log from "electron-log";
 import path from "node:path";
@@ -365,6 +365,19 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
     });
     this.ytmView.on("webcontents-page-title-updated", (event, title) => {
       this.emit("title-updated", title);
+    });
+    this.ytmView.on("webcontents-will-prevent-unload", event => {
+      const choice = dialog.showMessageBoxSync(this.ytmView.getParentWindow()._getElectronWindow(), {
+        type: "question",
+        buttons: ["Leave", "Cancel"],
+        title: "Leave site?",
+        message: "Changes you made may not be saved.",
+        defaultId: 0,
+        cancelId: 1
+      });
+      if (choice === 0) {
+        event.preventDefault();
+      }
     });
     this.setWindowOpenHandler();
 
