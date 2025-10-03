@@ -497,24 +497,24 @@ app.on("ready", async () => {
       label: "Play/Pause",
       type: "normal",
       click: async () => {
-        await ytmViewManager.ready();
-        ytmViewManager.getView().webContents.send("remoteControl:execute", "playPause");
+        const remoteControlApi = serviceHost.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
+        remoteControlApi.postMessage("execute", "playPause");
       }
     },
     {
       label: "Previous",
       type: "normal",
       click: async () => {
-        await ytmViewManager.ready();
-        ytmViewManager.getView().webContents.send("remoteControl:execute", "previous");
+        const remoteControlApi = serviceHost.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
+        remoteControlApi.postMessage("execute", "previous");
       }
     },
     {
       label: "Next",
       type: "normal",
       click: async () => {
-        await ytmViewManager.ready();
-        ytmViewManager.getView().webContents.send("remoteControl:execute", "next");
+        const remoteControlApi = serviceHost.getService(ProtectedAPIManager).createOrGetAPI("RemoteControl");
+        remoteControlApi.postMessage("execute", "next");
       }
     },
     {

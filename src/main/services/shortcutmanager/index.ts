@@ -3,12 +3,12 @@ import log from "electron-log";
 import Service from "../service";
 import ConfigStore from "../configstore";
 import { MemoryStoreSchema, StoreSchema } from "~shared/store/schema";
-import YTMViewManager from "../ytmviewmanager";
 import { DependencyConstructor, Paths } from "~shared/types";
 import MemoryStore from "../memorystore";
+import ProtectedAPIManager from "../protectedapimanager";
 
 export default class ShortcutManager extends Service {
-  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, YTMViewManager, MemoryStore<MemoryStoreSchema>];
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, ProtectedAPIManager, MemoryStore<MemoryStoreSchema>];
 
   private _initialized = false;
   public get initialized() {
@@ -108,14 +108,14 @@ export default class ShortcutManager extends Service {
   }
 
   private tryRegisterShortcut(accelerator: string, remoteControl: string, failFlag: Paths<MemoryStoreSchema>) {
-    const ytmViewManager = this.getDependency(YTMViewManager);
     const memoryStore = this.getDependency(MemoryStore<MemoryStoreSchema>);
+    const protectedApiManager = this.getDependency(ProtectedAPIManager);
 
     let registered = false;
     try {
       registered = globalShortcut.register(accelerator, async () => {
-        await ytmViewManager.ready();
-        ytmViewManager.getView().webContents.send("remoteControl:execute", remoteControl);
+        const remoteControlApi = protectedApiManager.createOrGetAPI("RemoteControl");
+        remoteControlApi.postMessage("execute", remoteControl);
       });
     } catch {
       /* empty */

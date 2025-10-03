@@ -5,9 +5,10 @@ import YTMViewManager from "../ytmviewmanager";
 import { DependencyConstructor } from "~shared/types";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import ProtectedAPIManager from "../protectedapimanager";
 
 export default class ProtocolManager extends Service {
-  public static override readonly dependencies: DependencyConstructor<Service>[] = [YTMViewManager];
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [YTMViewManager, ProtectedAPIManager];
 
   private _initialized = false;
   public get initialized() {
@@ -57,6 +58,7 @@ export default class ProtocolManager extends Service {
 
   public async handleYTMDProtocol(url: string) {
     const ytmViewManager = this.getDependency(YTMViewManager);
+    const protectedApiManager = this.getDependency(ProtectedAPIManager);
 
     log.info("Handling ytmd protocol url", url);
     const urlPaths = url.split("://")[1];
@@ -71,8 +73,9 @@ export default class ProtocolManager extends Service {
 
               if (ytmViewManager.isInitialized()) {
                 log.debug(`Navigating to videoId: ${videoId}, playlistId: ${playlistId}`);
-                await ytmViewManager.ready();
-                ytmViewManager.getView().webContents.send("remoteControl:execute", "navigate", {
+
+                const remoteControlApi = protectedApiManager.createOrGetAPI("RemoteControl");
+                remoteControlApi.postMessage("execute", "navigate", {
                   watchEndpoint: {
                     videoId: videoId,
                     playlistId: playlistId

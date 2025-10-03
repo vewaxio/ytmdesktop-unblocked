@@ -5,13 +5,13 @@ import Service from "../service";
 import { StoreSchema } from "~shared/store/schema";
 import ConfigStore from "../configstore";
 import AppWindowManager from "../windowmanager";
-import YTMViewManager from "../ytmviewmanager";
 import { DependencyConstructor } from "~shared/types";
 import { VideoState } from "~shared/playerstatestore/types";
 import PlayerStateStore from "../playerstatestore";
+import ProtectedAPIManager from "../protectedapimanager";
 
 export default class TaskbarManager extends Service {
-  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, AppWindowManager, YTMViewManager, PlayerStateStore];
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, AppWindowManager, ProtectedAPIManager, PlayerStateStore];
 
   private _initialized = false;
   public get initialized() {
@@ -52,15 +52,15 @@ export default class TaskbarManager extends Service {
         taskbarFlags.push("disabled");
       }
 
-      const ytmViewManager = this.getDependency(YTMViewManager);
+      const protectedApiManager = this.getDependency(ProtectedAPIManager);
       mainWindow.setThumbarButtons([
         {
           tooltip: "Previous",
           icon: nativeImage.createFromPath(getControlsIconPath("play-previous-button.png")),
           flags: taskbarFlags,
           async click() {
-            await ytmViewManager.ready();
-            ytmViewManager.getView().webContents.send("remoteControl:execute", "previous");
+            const remoteControlApi = protectedApiManager.createOrGetAPI("RemoteControl");
+            remoteControlApi.postMessage("execute", "previous");
           }
         },
         {
@@ -70,8 +70,8 @@ export default class TaskbarManager extends Service {
             : nativeImage.createFromPath(getControlsIconPath("play-button.png")),
           flags: taskbarFlags,
           async click() {
-            await ytmViewManager.ready();
-            ytmViewManager.getView().webContents.send("remoteControl:execute", "playPause");
+            const remoteControlApi = protectedApiManager.createOrGetAPI("RemoteControl");
+            remoteControlApi.postMessage("execute", "playPause");
           }
         },
         {
@@ -79,8 +79,8 @@ export default class TaskbarManager extends Service {
           icon: nativeImage.createFromPath(getControlsIconPath("play-next-button.png")),
           flags: taskbarFlags,
           async click() {
-            await ytmViewManager.ready();
-            ytmViewManager.getView().webContents.send("remoteControl:execute", "next");
+            const remoteControlApi = protectedApiManager.createOrGetAPI("RemoteControl");
+            remoteControlApi.postMessage("execute", "next");
           }
         }
       ]);

@@ -41,6 +41,13 @@ export class PolymerHook {
                   this._ytmStore = provider.useValue.store;
                   this.recordObjects = false;
                   this.hookedObjs = [];
+
+                  // TODO: Remove this global. We're going to keep it internal but an integration script currently needs it for now until that's changed.
+                  const ytmdHook = {
+                    ytmStore: provider.useValue.store
+                  };
+                  Object.freeze(ytmdHook);
+                  window.__YTMD_HOOK__ = ytmdHook;
                 }
               }
             }

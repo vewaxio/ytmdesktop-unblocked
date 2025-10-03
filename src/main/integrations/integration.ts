@@ -60,7 +60,7 @@ export default abstract class Integration {
 
   protected executeYTMScript(script: string): NoOverride {
     const ytmViewManager = this.host.getService(YTMViewManager);
-    ytmViewManager.getView().webContents.send("remoteControl:executeScript", script);
+    ytmViewManager.getView().webContents.send("ytmView:executeScript", script);
     return null;
   }
 
