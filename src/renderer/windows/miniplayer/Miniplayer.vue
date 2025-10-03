@@ -311,7 +311,6 @@ window.addEventListener("resize", reconcileMarquee);
   display: flex;
   height: 80px;
   flex-direction: column;
-  -webkit-app-region: no-drag;
   position: relative;
 }
 
@@ -401,6 +400,7 @@ window.addEventListener("resize", reconcileMarquee);
 .seekbar-container {
   padding: 8px 0;
   cursor: pointer;
+  -webkit-app-region: no-drag;
 }
 
 .seekbar {

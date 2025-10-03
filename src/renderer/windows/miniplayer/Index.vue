@@ -52,7 +52,6 @@ function pinUnpinMiniplayer() {
 <style scoped>
 .topbar {
   height: 36px;
-  -webkit-app-region: drag;
   display: flex;
   justify-content: right;
   position: relative;
