@@ -31,7 +31,7 @@ window.addEventListener("message", async event => {
   if (event.data.op && event.data.op === "ytmd-ready") {
     ipcRenderer.send("ytmView:ready", event.data.completions);
 
-    // TODO: Move this to be part of the ProtectedAPI system
+    // TODO: Move all the below be part of the ProtectedAPI system within this block
     const state = await store.get("state");
     const continueWhereYouLeftOff = (await store.get("playback")).continueWhereYouLeftOff;
 
@@ -81,6 +81,10 @@ window.addEventListener("message", async event => {
           volumeSlider.classList.remove("ytmd-persist-volume-slider");
         }
       }
+    });
+
+    ipcRenderer.on("ytmView:executeScript", async (_event, script) => {
+      (await webFrame.executeJavaScript(script))();
     });
   }
 
