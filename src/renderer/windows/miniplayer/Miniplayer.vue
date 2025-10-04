@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, useTemplateRef } from "vue";
 import { PlayerState, RepeatMode, Thumbnail, VideoState } from "~shared/playerstatestore/types";
+import RangeInput from "../../components/RangeInput.vue";
 
 const state = ref<PlayerState | null>(null);
 state.value = await window.ytmd.playerStore.getState();
+
+const volume = ref(state.value.volume);
 
 const thumbnailUrl = ref("");
 
@@ -119,6 +122,16 @@ function nextVideo() {
 function cycleRepeat() {
   window.ytmd.executeCommandInYTMView("cycleRepeatMode");
 }
+function volumeChanged() {
+  window.ytmd.executeCommandInYTMView("setVolume", volume.value);
+}
+function toggleMute() {
+  if (!state.value.muted) {
+    window.ytmd.executeCommandInYTMView("mute");
+  } else {
+    window.ytmd.executeCommandInYTMView("unmute");
+  }
+}
 
 window.addEventListener("resize", reconcileMarquee);
 </script>
@@ -163,11 +176,12 @@ window.addEventListener("resize", reconcileMarquee);
             v-if="seekHandleVisible"
             id="handle"
             class="handle"
-            :style="{ left: `${((videoProgress - 3) / videoLength) * 100}%` }"
+            :style="{ left: `${(videoProgress / videoLength) * 100}%` }"
           />
         </div>
       </div>
       <div class="video-controls">
+        <div class="padding" />
         <div class="controls">
           <button
             class="previous"
@@ -202,6 +216,34 @@ window.addEventListener("resize", reconcileMarquee);
           >
             <span class="icon material-symbols-outlined">skip_next</span>
           </button>
+        </div>
+        <div class="controls right">
+          <div class="volume">
+            <RangeInput
+              v-model="volume"
+              class="slider"
+              :min="0"
+              :max="100"
+              @update:model-value="volumeChanged"
+            />
+            <button
+              class="next"
+              @click="toggleMute"
+            >
+              <span
+                v-if="volume <= 50 && !state.muted"
+                class="icon material-symbols-outlined"
+              >volume_down</span>
+              <span
+                v-if="volume > 50 && !state.muted"
+                class="icon material-symbols-outlined"
+              >volume_up</span>
+              <span
+                v-if="state.muted"
+                class="icon material-symbols-outlined"
+              >volume_off</span>
+            </button>
+          </div>
           <button
             class="repeat"
             @click="cycleRepeat"
@@ -282,9 +324,9 @@ window.addEventListener("resize", reconcileMarquee);
 }
 
 .video-controls {
-  display: flex;
+  display: grid;
   flex: 1;
-  justify-content: center;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   margin-bottom: 8px;
 }
@@ -293,6 +335,11 @@ window.addEventListener("resize", reconcileMarquee);
   display: flex;
   justify-content: center;
   align-items: center;
+  justify-self: center;
+}
+
+.controls.right {
+  justify-self: end;
 }
 
 .controls button {
@@ -300,6 +347,33 @@ window.addEventListener("resize", reconcileMarquee);
   border: none;
   cursor: pointer;
   height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.volume {
+  -webkit-app-region: no-drag;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.volume .slider {
+  width: 56px;
+  margin-right: 6px;
+  margin-bottom: 3px;
+}
+
+.volume {
+  -webkit-app-region: no-drag;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.volume .slider {
+  width: 56px;
+  margin-right: 6px;
+  margin-bottom: 3px;
 }
 
 .video-info {
