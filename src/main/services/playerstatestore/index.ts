@@ -4,6 +4,7 @@ import log from "electron-log";
 import { DependencyConstructor } from "~shared/types";
 import ProtectedAPIManager, { ProtectedAPI } from "../protectedapimanager";
 import AppWindowManager from "../windowmanager";
+import StateManager from "../statemanager";
 
 enum YTMVideoState {
   Unstarted = -1,
@@ -211,7 +212,7 @@ export type PlayerStateStoreEventMap = {
 };
 
 export default class PlayerStateStore extends EventEmitterService<PlayerStateStoreEventMap> {
-  public static override readonly dependencies: DependencyConstructor<Service>[] = [AppWindowManager, ProtectedAPIManager];
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [AppWindowManager, ProtectedAPIManager, StateManager];
 
   private videoProgress = 0;
   private state: VideoState = -1;
@@ -373,6 +374,12 @@ export default class PlayerStateStore extends EventEmitterService<PlayerStateSto
       if (windowManager.hasWindow("Main")) windowManager.getWindow("Main").setTitle(`YouTube Music Desktop App`);
       if (windowManager.hasWindow("Miniplayer")) windowManager.getWindow("Miniplayer").setTitle("YouTube Music Desktop App - Miniplayer");
     }
+
+    const stateManager = this.getDependency(StateManager);
+    stateManager.updateState({
+      lastVideoId: state.videoDetails?.id ?? "",
+      lastPlaylistId: state.playlistId ?? ""
+    });
 
     this.emit("state-changed", this.getState());
   }
