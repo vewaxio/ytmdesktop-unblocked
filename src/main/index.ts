@@ -153,12 +153,15 @@ app.on("ready", async () => {
   autoUpdater.once("downloaded", autoUpdaterCallbacks.downloaded);
   autoUpdater.once("error", autoUpdaterCallbacks.error);
   if (await autoUpdater.checkForUpdates(true)) {
-    app.relaunch();
-    app.exit();
+    autoUpdater.quitAndInstall();
+    return;
   } else {
-    await new Promise(resolve => {
-      setTimeout(resolve, 1500);
-    });
+    // Better visual feedback for the updater window when in development mode
+    if (!app.isPackaged) {
+      await new Promise(resolve => {
+        setTimeout(resolve, 1500);
+      });
+    }
   }
   // Ensure the events are unbinded as we don't need them anymore
   autoUpdater.off("checking", autoUpdaterCallbacks.checking);

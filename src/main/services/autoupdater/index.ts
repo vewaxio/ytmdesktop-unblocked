@@ -133,6 +133,10 @@ export default class AutoUpdater extends EventEmitterService<AutoUpdaterEvents> 
     return false;
   }
 
+  public quitAndInstall() {
+    autoUpdater.quitAndInstall();
+  }
+
   private reconcileMemoryStoreState() {
     const memoryStore = this.getDependency(MemoryStore<MemoryStoreSchema>);
 
