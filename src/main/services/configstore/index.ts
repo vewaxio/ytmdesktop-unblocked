@@ -25,7 +25,8 @@ export default class ConfigStore extends Service {
       watch: true,
       defaults: {
         metadata: {
-          version: 1
+          version: 1,
+          appVersion: app.getVersion()
         },
         general: {
           disableHardwareAcceleration: false,

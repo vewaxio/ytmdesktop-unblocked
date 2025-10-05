@@ -602,6 +602,65 @@ app.on("ready", async () => {
   });
 
   integrationManager.runHook(IntegrationManagerHook.AppReady);
+
+  // Show a changelog popup window if one should be shown
+  if (configStore.get("metadata.appVersion") !== app.getVersion()) {
+    const mainWindowBounds = mainWindow._getElectronWindow().getBounds();
+    const changelogWindow = windowManager.createWindow("Browser", {
+      name: "Changelog",
+      autoRecreate: false,
+      waitForViews: true,
+      url: app.isPackaged ? "ytmd-app://changelog" : ALL_WINDOWS_VITE_DEV_SERVER_URL + "/windows/changelog/index.html",
+      electronOptions: {
+        width: 800,
+        height: 600,
+        x: Math.round(mainWindowBounds.x + (mainWindowBounds.width / 2 - 400)),
+        y: Math.round(mainWindowBounds.y + (mainWindowBounds.height / 2 - 300)),
+        minimizable: false,
+        maximizable: false,
+        frame: false,
+        show: false,
+        icon: getIconPath("ytmd.png"),
+        parent: mainWindow._getElectronWindow(),
+        modal: process.platform !== "darwin",
+        titleBarStyle: "hidden",
+        titleBarOverlay: {
+          color: "#000000",
+          symbolColor: "#BBBBBB",
+          height: 36
+        },
+        webPreferences: {
+          sandbox: true,
+          contextIsolation: true,
+          preload: path.join(import.meta.dirname, `../renderer/windows/changelog/preload.js`),
+          devTools: !app.isPackaged ? true : configStore.get("developer.enableDevTools")
+        }
+      }
+    });
+    changelogWindow.ipcHandle("changelog:getReleaseMetadata", async () => {
+      const feedUrl = autoUpdater.getFeedUrlNoVersion();
+      const res = await fetch(`${feedUrl}/${configStore.get("metadata.appVersion") ?? app.getVersion()}`);
+      return await res.json();
+    });
+    changelogWindow.setWindowOpenHandler(details => {
+      shell.openExternal(details.url);
+
+      return {
+        action: "deny"
+      };
+    });
+    changelogWindow.webContents.on("will-navigate", event => {
+      event.preventDefault();
+      shell.openExternal(event.url);
+    });
+    changelogWindow.webContents.on("will-redirect", event => {
+      event.preventDefault();
+      shell.openExternal(event.url);
+    });
+    changelogWindow.on("electronwindow-close", () => {
+      configStore.set("metadata.appVersion", app.getVersion());
+    });
+  }
 });
 
 app.on("open-url", (_, url) => {

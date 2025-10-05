@@ -7,6 +7,7 @@ export enum TrayIconStyle {
 export type StoreSchema = {
   metadata: {
     version: 1;
+    appVersion: string;
   };
   general: {
     disableHardwareAcceleration: boolean;

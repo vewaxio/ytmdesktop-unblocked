@@ -116,6 +116,11 @@ const config: ForgeConfig = {
           target: "preload"
         },
         {
+          entry: "src/renderer/windows/changelog/preload.ts",
+          config: "viteconfig/preload/changelog_window.ts",
+          target: "preload"
+        },
+        {
           entry: "src/renderer/ytmview/preload.ts",
           config: "viteconfig/preload/ytmview.ts",
           target: "preload"
