@@ -395,7 +395,6 @@ app.on("ready", async () => {
         maximizable: false,
         frame: false,
         show: false,
-        alwaysOnTop: true,
         icon: getIconPath("ytmd.png"),
         titleBarStyle: "hidden",
         webPreferences: {
@@ -406,6 +405,8 @@ app.on("ready", async () => {
         }
       }
     });
+    // On mac and windows `pop-up-menu` will keep the miniplayer above the dock or taskbar
+    miniplayerWindow._getElectronWindow().setAlwaysOnTop(true, "pop-up-menu");
 
     miniplayerWindow.on("electronwindow-resize", () => {
       stateManager.updateState({

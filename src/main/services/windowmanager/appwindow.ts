@@ -454,7 +454,7 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
         this.closeWindow();
       });
       browserWindow.webContents.ipc.on("windowControls:setAlwaysOnTop", (event, alwaysOnTop: boolean) => {
-        this.electronWindow.setAlwaysOnTop(alwaysOnTop);
+        this.electronWindow.setAlwaysOnTop(alwaysOnTop, alwaysOnTop ? "pop-up-menu" : "normal");
       });
       browserWindow.webContents.ipc.on("windowControls:requestState", () => {
         this.sendWindowControlsStateIpc();
