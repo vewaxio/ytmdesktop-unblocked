@@ -43,6 +43,9 @@ function stateChanged(newState) {
   if (!seekbarDragging) {
     videoProgress.value = newState.videoProgress;
   }
+
+  volume.value = newState.volume;
+  state.value = newState;
 }
 
 function reconcileMarquee() {
