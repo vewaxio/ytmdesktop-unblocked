@@ -85,6 +85,10 @@ export class ProtectedAPI extends EventEmitter {
         }
       }
     });
+    this.port.on("close", () => {
+      log.info(`protectedapi: api '${this.name}' port closed unbinding`);
+      this.port = null;
+    });
     this.port.start();
 
     log.info(`protectedapi: api '${this.name}' port bound`);

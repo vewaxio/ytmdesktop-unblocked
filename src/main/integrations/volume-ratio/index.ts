@@ -14,6 +14,7 @@ export default class VolumeRatio extends Integration {
 
   private injected = false;
   private ytmViewRecreatedListener = () => {
+    this.injected = false;
     this.onEnabled();
   };
 
