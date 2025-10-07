@@ -134,6 +134,10 @@ export default class ConfigStore extends Service {
           if (!store.has("state.miniplayerWindowBounds")) {
             store.set("state.miniplayerWindowBounds", null);
           }
+
+          if (!store.has("metadata.appVersion")) {
+            store.set("metadata.appVersion", "2.0.10");
+          }
         }
       }
     });
