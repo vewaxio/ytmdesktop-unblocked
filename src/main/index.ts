@@ -41,9 +41,9 @@ if (electronSquirrelStartup) {
 const serviceCollection = new ServiceCollection();
 serviceCollection.addServices([
   WatchDog,
-  FlagManager,
   ConfigStore,
   AppWindowManager,
+  FlagManager,
   MemoryStore<MemoryStoreSchema>,
   AutoUpdater,
   StateManager,

@@ -1,8 +1,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { EventEmitterService } from "../service";
+import Service, { EventEmitterService } from "../service";
 import { app, ipcMain } from "electron";
 import { Context, Unleash } from "unleash-client";
+import AppWindowManager from "../windowmanager";
+import { DependencyConstructor } from "~shared/types";
+import log from "electron-log";
 
 declare const YTMD_UNLEASH_SERVER: string;
 declare const YTMD_UNLEASH_INSTANCE_ID: string;
@@ -10,10 +13,12 @@ declare const YTMD_UNLEASH_INSTANCE_ID: string;
 export type FlagManagerEventMap = {
   ready: [];
   synchronized: [];
-  changed: [{ [flag: string]: boolean }];
+  changed: [{ name: string; enabled: boolean }[]];
 };
 
 export default class FlagManager extends EventEmitterService<FlagManagerEventMap> {
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [AppWindowManager];
+
   private context: Context = {
     sessionId: Math.floor(Math.random() * 1_000_000_000).toString()
   };
@@ -44,13 +49,21 @@ export default class FlagManager extends EventEmitterService<FlagManagerEventMap
       });
 
       this.unleash.on("ready", () => {
+        log.info("flags: synchronized");
         this.emit("ready");
       });
       this.unleash.on("synchronized", () => {
+        log.info("flags: synchronized");
         this.emit("synchronized");
       });
-      this.unleash.on("changed", data => {
-        this.emit("changed", data);
+      this.unleash.on("changed", () => {
+        const windowManager = this.getDependency(AppWindowManager);
+
+        for (const window of windowManager.getWindows()) {
+          window.ipcBroadcast("flags:changed", this.getFlags());
+        }
+
+        this.emit("changed", this.getFlags());
       });
     }
 
@@ -73,15 +86,15 @@ export default class FlagManager extends EventEmitterService<FlagManagerEventMap
    * @param flag
    * @returns
    */
-  public getFlag(flag: string): boolean {
-    return this.unleash?.getFeatureToggleDefinition(flag)?.enabled ?? false;
+  public getFlag(name: string): boolean {
+    return this.unleash?.getFeatureToggleDefinition(name)?.enabled ?? false;
   }
 
   /**
    * Gets the flags and their enable state
    * @returns
    */
-  public getFlags(): { flag: string; enabled: boolean }[] {
-    return this.unleash?.getFeatureToggleDefinitions()?.map(flag => ({ flag: flag.name, enabled: flag.enabled }));
+  public getFlags(): { name: string; enabled: boolean }[] {
+    return this.unleash?.getFeatureToggleDefinitions()?.map(flag => ({ name: flag.name, enabled: flag.enabled }));
   }
 }
