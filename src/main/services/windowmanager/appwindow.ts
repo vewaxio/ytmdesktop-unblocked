@@ -6,7 +6,9 @@ import {
   BrowserWindowConstructorOptions,
   IpcMainEvent,
   IpcMainInvokeEvent,
-  Rectangle
+  Rectangle,
+  Size,
+  WillResizeDetails
 } from "electron";
 import assert from "node:assert";
 import log from "electron-log";
@@ -17,6 +19,7 @@ import EventEmitter from "node:events";
 export type AppWindowType = "Base" | "Browser";
 export type AppWindowEventMap = {
   "recreated": [];
+  "electronwindow-will-resize": [Event, Rectangle, WillResizeDetails];
   "electronwindow-resize": [];
   "electronwindow-move": [];
   "electronwindow-maximize": [];
@@ -291,6 +294,10 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
     this.electronWindow.setTitle(title);
   }
 
+  public setAspectRatio(aspectRatio: number, extraSize?: Size) {
+    this.electronWindow.setAspectRatio(aspectRatio, extraSize);
+  }
+
   public getWindowType() {
     return this.windowType;
   }
@@ -425,6 +432,9 @@ export class AppWindow<T extends AppWindowType> extends EventEmitter<AppWindowEv
     });
 
     //#region Proxy rest of events
+    this.electronWindow.on("will-resize", (event, newBounds, details) => {
+      this.emit("electronwindow-will-resize", event, newBounds, details);
+    });
     this.electronWindow.on("resize", () => {
       this.emit("electronwindow-resize");
     });

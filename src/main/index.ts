@@ -29,6 +29,7 @@ import ProtocolManager from "./services/protocolmanager";
 import PlayerStateStore from "./services/playerstatestore";
 import ProtectedAPIManager from "./services/protectedapimanager";
 import FlagManager from "./services/flagmanager";
+import { VideoType } from "~shared/playerstatestore/types";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -117,6 +118,7 @@ app.on("ready", async () => {
   const windowManager = serviceHost.getService(AppWindowManager);
   const ytmViewManager = serviceHost.getService(YTMViewManager);
   const stateManager = serviceHost.getService(StateManager);
+  const playerStateStore = serviceHost.getService(PlayerStateStore);
 
   //#region Updater Check
   const updaterWindow = windowManager.createWindow("Browser", {
@@ -407,7 +409,14 @@ app.on("ready", async () => {
     });
     // On mac and windows `pop-up-menu` will keep the miniplayer above the dock or taskbar
     miniplayerWindow._getElectronWindow().setAlwaysOnTop(true, "pop-up-menu");
-
+    miniplayerWindow.on("electronwindow-will-resize", () => {
+      const playerState = playerStateStore.getState();
+      if (playerState.videoDetails?.videoType === VideoType.MusicVideo) {
+        miniplayerWindow.setAspectRatio(16 / 9);
+      } else if (playerState.videoDetails?.videoType === VideoType.MusicAudio) {
+        miniplayerWindow.setAspectRatio(1);
+      }
+    });
     miniplayerWindow.on("electronwindow-resize", () => {
       stateManager.updateState({
         miniplayerWindowBounds: miniplayerWindow._getElectronWindow().getBounds()
