@@ -41,6 +41,10 @@ export default defineConfig({
   define: {
     YTMD_DISABLE_UPDATES: devBuild,
     YTMD_UPDATE_FEED_OWNER: process.env.YTMD_UPDATE_FEED_OWNER ? `'${process.env.YTMD_UPDATE_FEED_OWNER}'` : "'ytmdesktop'",
-    YTMD_UPDATE_FEED_REPOSITORY: process.env.YTMD_UPDATE_FEED_REPOSITORY ? `'${process.env.YTMD_UPDATE_FEED_REPOSITORY}'` : "'ytmdesktop'"
+    YTMD_UPDATE_FEED_REPOSITORY: process.env.YTMD_UPDATE_FEED_REPOSITORY ? `'${process.env.YTMD_UPDATE_FEED_REPOSITORY}'` : "'ytmdesktop'",
+    YTMD_UNLEASH_SERVER: process.env.YTMD_UNLEASH_SERVER
+      ? `'${process.env.YTMD_UNLEASH_SERVER}'`
+      : "'https://gitlab.com/api/v4/feature_flags/unleash/59142964'",
+    YTMD_UNLEASH_INSTANCE_ID: process.env.YTMD_UNLEASH_INSTANCE_ID ? `'${process.env.YTMD_UNLEASH_INSTANCE_ID}'` : "'glffct-YSac7uDgSYGNUXak2uzL'"
   }
 });

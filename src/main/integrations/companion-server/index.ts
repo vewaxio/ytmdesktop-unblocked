@@ -39,6 +39,7 @@ export default class CompanionServer extends Integration {
   public name = "CompanionServer";
   public storeEnableProperty: Integration["storeEnableProperty"] = "integrations.companionServerEnabled";
   public override dependentStoreProperties: Integration["dependentStoreProperties"] = ["integrations.companionServerCORSWildcardEnabled"];
+  public override disableFlags = ["disable_companion_server"];
 
   private listenIp = "0.0.0.0";
   private listenPort = 9863;
@@ -332,6 +333,8 @@ export default class CompanionServer extends Integration {
 
   public async onDisabled() {
     const memoryStore = this.getService(MemoryStore<MemoryStoreSchema>);
+    const playerStateStore = this.getService(PlayerStateStore);
+
     memoryStore.set("companionServerAuthWindowEnabled", false);
     memoryStore.removeOnStateChanged(this.memoryStoryListenerCallback);
     if (this.fastifyServer) {
@@ -343,7 +346,7 @@ export default class CompanionServer extends Integration {
     if (this.ipcServer) {
       this.ipcServer.close();
       if (this.stateStoreListener) {
-        playerStateStore.removeEventListener(this.stateStoreListener);
+        playerStateStore.off("state-changed", this.stateStoreListener);
       }
     }
     if (this.mdns) {

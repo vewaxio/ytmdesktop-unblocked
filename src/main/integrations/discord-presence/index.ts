@@ -53,6 +53,7 @@ function stringLimit(str: string, limit: number, minimum: number) {
 export default class DiscordPresence extends Integration {
   public name = "DiscordPresence";
   public storeEnableProperty: Integration["storeEnableProperty"] = "integrations.discordPresenceEnabled";
+  public override disableFlags = ["disable_discord_presence"];
 
   private discordClient: DiscordClient = null;
   private ready = false;

@@ -8,6 +8,8 @@ import ConfigStore from "../../services/configstore";
 export default class CustomCSS extends Integration {
   public override name = "CustomCSS";
   public override storeEnableProperty: Integration["storeEnableProperty"] = "appearance.customCSSEnabled";
+  public override disableFlags = ["disable_custom_css"];
+
   private injected = false;
 
   private customCSSKey: string | null = null;

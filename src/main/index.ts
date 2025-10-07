@@ -28,6 +28,7 @@ import { MemoryStoreSchema, TrayIconStyle } from "~shared/store/schema";
 import ProtocolManager from "./services/protocolmanager";
 import PlayerStateStore from "./services/playerstatestore";
 import ProtectedAPIManager from "./services/protectedapimanager";
+import FlagManager from "./services/flagmanager";
 
 declare const ALL_WINDOWS_VITE_DEV_SERVER_URL: string;
 
@@ -40,6 +41,7 @@ if (electronSquirrelStartup) {
 const serviceCollection = new ServiceCollection();
 serviceCollection.addServices([
   WatchDog,
+  FlagManager,
   ConfigStore,
   AppWindowManager,
   MemoryStore<MemoryStoreSchema>,

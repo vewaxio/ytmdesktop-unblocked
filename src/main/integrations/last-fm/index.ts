@@ -14,6 +14,7 @@ import { PlayerState, VideoDetails, VideoState } from "~shared/playerstatestore/
 export default class LastFM extends Integration {
   public name = "LastFM";
   public storeEnableProperty: Integration["storeEnableProperty"] = "integrations.lastFMEnabled";
+  public override disableFlags = ["disable_last_fm"];
 
   private possibleVideoIds: string[] | null;
   private lastfmDetails: StoreSchema["lastfm"] = null;

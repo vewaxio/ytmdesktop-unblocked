@@ -4,6 +4,7 @@ import { StoreSchema } from "~shared/store/schema";
 import { DependencyConstructor, ValueAtPath } from "~shared/types";
 import Service, { EventEmitterService } from "../service";
 import ConfigStore from "../configstore";
+import FlagManager from "../flagmanager";
 
 type IntegrationCreator<T> = new (...args: unknown[]) => T;
 type IntegrationManagerEventMap = {
@@ -20,7 +21,7 @@ function getProperty<T, Path extends string>(obj: T, path: Path): ValueAtPath<T,
 }
 
 export default class IntegrationManager extends EventEmitterService<IntegrationManagerEventMap> {
-  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore];
+  public static override readonly dependencies: DependencyConstructor<Service>[] = [ConfigStore, FlagManager];
 
   private integrations: Integration[] = [];
   private enabledIntegrations: Integration[] = [];
@@ -33,8 +34,12 @@ export default class IntegrationManager extends EventEmitterService<IntegrationM
 
   public override onPostInitialized() {
     const configStore = this.getDependency(ConfigStore);
+    const flagManager = this.getDependency(FlagManager);
 
     configStore.onDidAnyChange((newState, oldState) => this.reconcileIntegrationEnableState(newState, oldState));
+    flagManager.on("changed", () => {
+      this.reconcileIntegrationEnableState();
+    });
   }
 
   public override onTerminated() {}
@@ -79,9 +84,18 @@ export default class IntegrationManager extends EventEmitterService<IntegrationM
 
   private async reconcileIntegrationEnableState(newState?: Readonly<StoreSchema>, oldState?: Readonly<StoreSchema>) {
     const configStore = this.getDependency(ConfigStore);
+    const flagManager = this.getDependency(FlagManager);
 
     for (const integration of this.integrations) {
-      const shouldBeEnabled = newState ? getProperty(newState, integration.storeEnableProperty) : configStore.get(integration.storeEnableProperty);
+      let shouldBeEnabled = newState ? getProperty(newState, integration.storeEnableProperty) : configStore.get(integration.storeEnableProperty);
+      let disabledByFlag = false;
+      for (const flag of integration.disableFlags) {
+        if (flagManager.getFlag(flag)) {
+          shouldBeEnabled = false;
+          disabledByFlag = true;
+        }
+      }
+
       if (!integration.isEnabled) {
         if (shouldBeEnabled) {
           if (!this.enabledIntegrations.includes(integration)) {
@@ -96,7 +110,7 @@ export default class IntegrationManager extends EventEmitterService<IntegrationM
       } else {
         if (!shouldBeEnabled) {
           if (this.enabledIntegrations.includes(integration)) {
-            log.info(`Disabling integration: ${integration.name}`);
+            log.info(`Disabling integration: ${integration.name}` + (disabledByFlag ? ` (flag disabled)` : ``));
 
             await integration.disable();
 

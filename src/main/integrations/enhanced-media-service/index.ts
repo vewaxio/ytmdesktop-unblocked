@@ -23,6 +23,7 @@ function getHighestResThumbnail(thumbnails: Thumbnail[]) {
 export default class EnhancedMediaService extends Integration {
   public name = "EnhancedMediaService";
   public storeEnableProperty: Integration["storeEnableProperty"] = "integrations.enhancedMediaServiceEnabled";
+  public override disableFlags = ["disable_enhanced_media_service"];
 
   private stateCallback: (event: PlayerState) => void = null;
   private mediaPlayer: MediaPlayer = new MediaPlayer("ytmdesktop", "YouTube Music Desktop App");

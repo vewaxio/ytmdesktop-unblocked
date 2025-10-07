@@ -21,6 +21,10 @@ export default abstract class Integration {
    * A list of dependent store properties which if changed should restart this integration
    */
   public readonly dependentStoreProperties: Paths<StoreSchema>[] = [];
+  /**
+   * A list of flags that will disable this integration regardless of the {@link storeEnableProperty}
+   */
+  public readonly disableFlags: string[] = [];
 
   private _isEnabled = false;
   public get isEnabled() {

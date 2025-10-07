@@ -7,6 +7,7 @@ import YTMViewManager from "../../services/ytmviewmanager";
 export default class VolumeRatio extends Integration {
   public override name = "VolumeRatio";
   public override storeEnableProperty: Integration["storeEnableProperty"] = "playback.ratioVolume";
+  public override disableFlags = ["disable_volume_ratio"];
 
   // This integration is based upon the following GreasyFork script:
   // https://greasyfork.org/en/scripts/397686-youtube-music-fix-volume-ratio

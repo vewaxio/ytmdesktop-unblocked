@@ -73,6 +73,7 @@ function getUrlContents(url: string) {
 export default class NowPlayingNotifications extends Integration {
   public name = "NowPlayingNotifications";
   public storeEnableProperty: Integration["storeEnableProperty"] = "general.showNotificationOnSongChange";
+  public override disableFlags = ["disable_now_playing_notifications"];
 
   private lastDetails: VideoDetails = null;
   private playerStateFunction: (state: PlayerState) => void;
