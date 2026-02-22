@@ -20,7 +20,9 @@ const config: ForgeConfig = {
   packagerConfig: {
     executableName: "youtube-music-desktop-app",
     icon: "./src/assets/icons/ytmd",
-    asarUnpack: ["**/node_modules/@cliqz/adblocker-electron-preload/**"],
+    asar: {
+      unpack: "**/node_modules/@cliqz/adblocker-electron-preload/**"
+    },
     extraResource: [
       "./src/assets/icons/tray.ico",
       "./src/assets/icons/trayTemplate.png",
@@ -40,8 +42,7 @@ const config: ForgeConfig = {
         schemes: ["ytmd"]
       }
     ],
-    appCategoryType: "public.app-category.music",
-    asar: true
+    appCategoryType: "public.app-category.music"
   },
   rebuildConfig: {},
   makers: [
