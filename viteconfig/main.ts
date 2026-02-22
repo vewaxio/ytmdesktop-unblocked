@@ -26,7 +26,7 @@ export default defineConfig({
   build: {
     outDir: ".vite/main",
     rollupOptions: {
-      external: ["bufferutil", "utf-8-validate", "@cliqz/adblocker-electron", "@cliqz/adblocker-electron-preload"]
+      external: ["bufferutil", "utf-8-validate"]
     }
   },
   define: {

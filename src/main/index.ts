@@ -28,8 +28,6 @@ import MemoryStore from "./memory-store";
 import playerStateStore, { PlayerState, VideoState } from "./player-state-store";
 import { MemoryStoreSchema, StoreSchema, TrayIconStyle } from "../shared/store/schema";
 
-import { ElectronBlocker } from "@cliqz/adblocker-electron";
-
 import CompanionServer from "./integrations/companion-server";
 import CustomCSS from "./integrations/custom-css";
 import DiscordPresence from "./integrations/discord-presence";
@@ -56,6 +54,32 @@ let appUpdateDownloaded = false;
 let appLaunchUpdateCheck = true;
 
 let stateSaverInterval: NodeJS.Timeout | null = null;
+
+const adUrlBlocklist: RegExp[] = [
+  /(^|\.)doubleclick\.net$/i,
+  /(^|\.)googlesyndication\.com$/i,
+  /(^|\.)googleadservices\.com$/i,
+  /(^|\.)adservice\.google\.com$/i,
+  /(^|\.)adservice\.google\.[a-z.]+$/i,
+  /(^|\.)adnxs\.com$/i
+];
+
+const adPathOrQueryBlocklist: RegExp[] = [/\bpagead\b/i, /\bads\b/i, /\bad_break\b/i, /\badformat\b/i, /\/api\/stats\/ads/i];
+
+const setupAdBlocking = (targetSession: Electron.Session): void => {
+  targetSession.webRequest.onBeforeRequest((details, callback) => {
+    try {
+      const url = new URL(details.url);
+      const hostnameMatch = adUrlBlocklist.some(pattern => pattern.test(url.hostname));
+      const pathOrQuery = `${url.pathname}${url.search}`;
+      const pathMatch = adPathOrQueryBlocklist.some(pattern => pattern.test(pathOrQuery));
+
+      callback({ cancel: hostnameMatch || pathMatch });
+    } catch {
+      callback({ cancel: false });
+    }
+  });
+};
 
 //#region   Crash + Error reporting
 crashReporter.start({ uploadToServer: false });
@@ -1898,15 +1922,9 @@ app.on("ready", async () => {
     return map;
   }, {});
 
-  // Setup ad blocker on the YTM view session
-  try {
-    const ytmSession = session.fromPartition(app.isPackaged ? "persist:ytmview" : "persist:ytmview-dev");
-    const blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch);
-    blocker.enableBlockingInSession(ytmSession);
-    log.info("Ad blocker enabled on YTM session");
-  } catch (err) {
-    log.warn("Ad blocker could not be initialized, ads may appear:", err);
-  }
+  const ytmSession = session.fromPartition(app.isPackaged ? "persist:ytmview" : "persist:ytmview-dev");
+  setupAdBlocking(ytmSession);
+  log.info("Ad blocker enabled on YTM session");
 
   // Create the YouTube Music view
   createYTMView();
