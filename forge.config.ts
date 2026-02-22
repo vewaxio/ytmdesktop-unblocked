@@ -21,7 +21,7 @@ const config: ForgeConfig = {
     executableName: "youtube-music-desktop-app",
     icon: "./src/assets/icons/ytmd",
     asar: {
-      unpack: "**/node_modules/@cliqz/adblocker-electron-preload/**"
+      unpack: "**/node_modules/@cliqz/adblocker-electron-preload/**/*"
     },
     extraResource: [
       "./src/assets/icons/tray.ico",
