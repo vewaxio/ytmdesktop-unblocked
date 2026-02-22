@@ -28,6 +28,8 @@ import MemoryStore from "./memory-store";
 import playerStateStore, { PlayerState, VideoState } from "./player-state-store";
 import { MemoryStoreSchema, StoreSchema, TrayIconStyle } from "../shared/store/schema";
 
+import { ElectronBlocker } from "@cliqz/adblocker-electron";
+
 import CompanionServer from "./integrations/companion-server";
 import CustomCSS from "./integrations/custom-css";
 import DiscordPresence from "./integrations/discord-presence";
@@ -1895,6 +1897,16 @@ app.on("ready", async () => {
     map[obj.name] = obj.script;
     return map;
   }, {});
+
+  // Setup ad blocker on the YTM view session
+  try {
+    const ytmSession = session.fromPartition(app.isPackaged ? "persist:ytmview" : "persist:ytmview-dev");
+    const blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch);
+    blocker.enableBlockingInSession(ytmSession);
+    log.info("Ad blocker enabled on YTM session");
+  } catch (err) {
+    log.warn("Ad blocker could not be initialized, ads may appear:", err);
+  }
 
   // Create the YouTube Music view
   createYTMView();
