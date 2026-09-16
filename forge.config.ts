@@ -46,7 +46,7 @@ const config: ForgeConfig = {
   makers: [
     new MakerSquirrel({
       iconUrl: `https://raw.githubusercontent.com/${process.env.YTMD_UPDATE_FEED_OWNER ?? "vewaxio"}/ytmdesktop-unblocked/main/src/assets/icons/ytmd.ico`,
-      setupExe: "YouTube.Music.Desktop.App-2.0.11.Setup.exe",
+      setupExe: "YouTube.Music.Desktop.App-2.0.12.Setup.exe",
       setupIcon: "./src/assets/icons/ytmd.ico"
     }),
     new MakerZIP({}, ["darwin"]),
