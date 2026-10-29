@@ -25,6 +25,18 @@ export function createStyleSheet() {
         display: none;
       }
 
+      /* Ad blocking and promo banners */
+      ytmusic-mealbar-promo-renderer,
+      ytmusic-banner-promo-renderer,
+      .ytp-ad-overlay-container,
+      .ytp-ad-message-container,
+      .video-ads,
+      .ytp-ad-module,
+      #mealbar-promo,
+      ytmusic-popup-container ytmusic-mealbar-promo-renderer {
+        display: none !important;
+      }
+
       .ytmd-persist-volume-slider {
         opacity: 1 !important;
         pointer-events: initial !important;

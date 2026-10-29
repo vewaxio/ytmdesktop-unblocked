@@ -203,6 +203,10 @@ export default class YTMViewManager extends EventEmitterService<YTMViewManagerEv
       }
     });
 
+    if (this.ytmView.webContents) {
+      setupAdBlocking(this.ytmView.webContents.session);
+    }
+
     this.ytmView.on("ready", () => {
       this.ytmView!.webContents!.setZoomFactor(configStore.get("appearance.zoom") / 100);
       const url = new URL(this.ytmView!.webContents!.getURL());

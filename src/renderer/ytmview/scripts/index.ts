@@ -6,7 +6,9 @@ import { createMaterialSymbolsLink, createStyleSheet } from "./setup/styles";
 import { createNavigationMenuArrows } from "./setup/navigation";
 import initRemote from "./setup/remote";
 import { addTimedLyrics, createAdditionalPlayerBarControls, hideChromecastButton, overrideHistoryButtonDisplay } from "./setup/extras";
+import { initAdblock } from "./setup/adblock";
 
+initAdblock();
 protectedapimanager.init();
 ytmhook.init();
 
